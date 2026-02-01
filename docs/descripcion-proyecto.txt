@@ -1,0 +1,2 @@
+Proyecto DAW - Johana Zavaleta
+Descripción breve del proyecto, estructura y tecnologías usadas (HTML, CSS, JS, PHP, Git, GitHub).
