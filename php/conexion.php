@@ -1,5 +1,5 @@
 <?php
-// conexion.php
+// conexion.php - desarrollo
 
 $host = "localhost";
 $usuario = "usuario_bd";
