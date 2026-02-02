@@ -1,6 +1,6 @@
 <?php
 // conexion.php
-
+//prueba profesor
 $host = "localhost";
 $usuario = "usuario_bd";
 $contrasena = "password_bd";
