@@ -1,6 +1,5 @@
 <?php
-// ldap-login.php
-// Servidor LDAP 
+// Servidor LDAP - ldap-login.php
 $ldap_host = "ldap://localhost"; // o la IP/hostname del servidor LDAP
 $ldap_port = 389;
 
