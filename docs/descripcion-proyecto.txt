@@ -1,2 +1,6 @@
 Proyecto DAW - Johana Zavaleta
 Descripción breve del proyecto, estructura y tecnologías usadas (HTML, CSS, JS, PHP, Git, GitHub).
+Se ha utilizado Git con ramas main y desarrollo.
+Se han realizado múltiples commits con mensajes descriptivos.
+Se ha realizado un merge de desarrollo a main.
+Se han gestionado Issues y un Project Board en GitHub.
