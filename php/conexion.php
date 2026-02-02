@@ -1,5 +1,6 @@
 <?php
-// conexion.php
+// conexion.php - desarrollo
+
 $host = "localhost";
 $usuario = "usuario_bd";
 $contrasena = "password_bd";
