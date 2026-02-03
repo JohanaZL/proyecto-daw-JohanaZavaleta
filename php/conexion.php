@@ -1,15 +1,69 @@
 <?php
-// conexion.php - desarrollo
+/**
+ * Clase ConexionBD
+ *
+ * Gestiona la conexión a la base de datos MySQL del proyecto DAW.
+ * Utiliza la extensión mysqli para establecer la conexión.
+ *
+ * @package ProyectoDAW
+ * @subpackage Conexion
+ */
+class ConexionBD {
 
-$host = "localhost";
-$usuario = "usuario_bd";
-$contrasena = "password_bd";
-$base_datos = "proyecto_daw";
+    /**
+     * Host del servidor MySQL.
+     *
+     * @var string
+     */
+    private $host = "localhost";
 
-$conexion = new mysqli($host, $usuario, $contrasena, $base_datos);
+    /**
+     * Nombre de usuario para la conexión a MySQL.
+     *
+     * @var string
+     */
+    private $usuario = "usuario_bd";
 
-if ($conexion->connect_error) {
-    die("Error de conexión: " . $conexion->connect_error);
+    /**
+     * Contraseña del usuario de MySQL.
+     *
+     * @var string
+     */
+    private $contrasena = "password_bd";
+
+    /**
+     * Nombre de la base de datos a utilizar.
+     *
+     * @var string
+     */
+    private $base_datos = "proyecto_daw";
+
+    /**
+     * Objeto de conexión MySQLi.
+     *
+     * @var mysqli|null
+     */
+    private $conexion = null;
+
+    /**
+     * Establece la conexión con la base de datos.
+     *
+     * @return mysqli Objeto de conexión MySQLi.
+     *
+     * @throws Exception Si ocurre un error durante la conexión.
+     */
+    public function conectar() {
+        $this->conexion = new mysqli(
+            $this->host,
+            $this->usuario,
+            $this->contrasena,
+            $this->base_datos
+        );
+
+        if ($this->conexion->connect_error) {
+            throw new Exception("Error de conexión: " . $this->conexion->connect_error);
+        }
+
+        return $this->conexion;
+    }
 }
-
-?>

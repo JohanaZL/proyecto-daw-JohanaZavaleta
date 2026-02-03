@@ -1,7 +1,10 @@
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
+    font-family: 'Helvetica Neue',sans-serif;
+    font-size: large;
+    background-color: #bae7faae;
     margin: 20px;
+    display: block;
+    text-align: center;
 }
 
 h1 {
@@ -9,11 +12,13 @@ h1 {
 }
 
 button {
-    padding: 10px 15px;
-    background-color: #007bff;
+    padding: 15px 20px;
+    background-color: #141bfe;
     color: white;
     border: none;
     cursor: pointer;
+    font-size: medium;
+    font-weight: bold;
 }
 
 button:hover {
