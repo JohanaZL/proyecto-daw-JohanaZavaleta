@@ -25,7 +25,7 @@ jobs:
 
       - name: Generar documentación
         run: |
-          ~/.composer/vendor/bin/phpdoc -d php -t docs --template=clean
+          ~/.composer/vendor/bin/phpdoc --config=phpdoc.xml
 
       - name: Subir documentación generada
         uses: stefanzweifel/git-auto-commit-action@v4
