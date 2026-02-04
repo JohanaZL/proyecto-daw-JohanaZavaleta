@@ -4,13 +4,24 @@
 
     <title>Documentación del Proyecto DAW</title>
 
-    <files>
-        <directory>php</directory>
-    </files>
+    <paths>
+        <output>docs</output>
+        <cache>cache</cache>
+    </paths>
 
-    <transformations>
-        <template name="responsive-twig" />
-        <target>docs</target>
-    </transformations>
+    <versions>
+        <version number="1.0.0">
+            <settings>
+                <visibility>public,protected,private</visibility>
+            </settings>
 
+            <paths>
+                <directory>php</directory>
+            </paths>
+
+            <templates>
+                <template name="responsive-twig"/>
+            </templates>
+        </version>
+    </versions>
 </phpdocumentor>
