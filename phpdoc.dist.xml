@@ -15,13 +15,13 @@
 
             <apis>
                 <api>
-                    <source dsn="php" />
+                    <source dsn="./php" />
                 </api>
             </apis>
 
             <guides>
                 <guide>
-                    <source dsn="php" />
+                    <source dsn="./php" />
                 </guide>
             </guides>
         </version>
