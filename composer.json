@@ -1,7 +1,13 @@
 {
-    "name": "johanazl/proyecto-daw-johanazavaleta", 
-    "description": "Proyecto DAW con documentación PHPDocumentor",
-    "require-dev": {
-        "phpdocumentor/phpdocumentor": "3.4.*"
+    "name": "johanazl/proyecto-daw",
+    "description": "Proyecto DAW con documentación PHP",
+    "type": "project",
+    "autoload": {
+        "psr-4": {
+            "ProyectoDAW\\": "php/"
+        }
+    },
+    "require": {
+        "phpdocumentor/phpdocumentor": "^3.4"
     }
 }

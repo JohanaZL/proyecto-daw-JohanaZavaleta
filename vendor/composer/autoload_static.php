@@ -88,6 +88,7 @@ class ComposerStaticInit9ae2fb3389489985d6b367d43ed5b21e
             'Psr\\EventDispatcher\\' => 20,
             'Psr\\Container\\' => 14,
             'Psr\\Cache\\' => 10,
+            'ProyectoDAW\\' => 12,
             'PhpParser\\' => 10,
             'Parsica\\Parsica\\' => 16,
             'PHPStan\\PhpDocParser\\' => 21,
@@ -132,8 +133,8 @@ class ComposerStaticInit9ae2fb3389489985d6b367d43ed5b21e
         'phpDocumentor\\Reflection\\' => 
         array (
             0 => __DIR__ . '/..' . '/phpdocumentor/reflection-common/src',
-            1 => __DIR__ . '/..' . '/phpdocumentor/type-resolver/src',
-            2 => __DIR__ . '/..' . '/phpdocumentor/reflection-docblock/src',
+            1 => __DIR__ . '/..' . '/phpdocumentor/reflection-docblock/src',
+            2 => __DIR__ . '/..' . '/phpdocumentor/type-resolver/src',
         ),
         'phpDocumentor\\JsonPath\\' => 
         array (
@@ -142,8 +143,8 @@ class ComposerStaticInit9ae2fb3389489985d6b367d43ed5b21e
         'phpDocumentor\\Guides\\' => 
         array (
             0 => __DIR__ . '/..' . '/phpdocumentor/guides/src',
-            1 => __DIR__ . '/..' . '/phpdocumentor/guides-markdown/src',
-            2 => __DIR__ . '/..' . '/phpdocumentor/guides-graphs/src',
+            1 => __DIR__ . '/..' . '/phpdocumentor/guides-graphs/src',
+            2 => __DIR__ . '/..' . '/phpdocumentor/guides-markdown/src',
             3 => __DIR__ . '/..' . '/phpdocumentor/guides-restructured-text/src',
         ),
         'phpDocumentor\\GraphViz\\PHPStan\\' => 
@@ -156,8 +157,8 @@ class ComposerStaticInit9ae2fb3389489985d6b367d43ed5b21e
         ),
         'phpDocumentor\\' => 
         array (
-            0 => __DIR__ . '/..' . '/phpdocumentor/reflection/src/phpDocumentor',
-            1 => __DIR__ . '/..' . '/phpdocumentor/phpdocumentor/src/phpDocumentor',
+            0 => __DIR__ . '/..' . '/phpdocumentor/phpdocumentor/src/phpDocumentor',
+            1 => __DIR__ . '/..' . '/phpdocumentor/reflection/src/phpDocumentor',
         ),
         'Webmozart\\Assert\\' => 
         array (
@@ -299,6 +300,10 @@ class ComposerStaticInit9ae2fb3389489985d6b367d43ed5b21e
         array (
             0 => __DIR__ . '/..' . '/psr/cache/src',
         ),
+        'ProyectoDAW\\' => 
+        array (
+            0 => __DIR__ . '/../..' . '/php',
+        ),
         'PhpParser\\' => 
         array (
             0 => __DIR__ . '/..' . '/nikic/php-parser/lib/PhpParser',
@@ -313,8 +318,8 @@ class ComposerStaticInit9ae2fb3389489985d6b367d43ed5b21e
         ),
         'Nette\\' => 
         array (
-            0 => __DIR__ . '/..' . '/nette/utils/src',
-            1 => __DIR__ . '/..' . '/nette/schema/src',
+            0 => __DIR__ . '/..' . '/nette/schema/src',
+            1 => __DIR__ . '/..' . '/nette/utils/src',
         ),
         'Monolog\\' => 
         array (
@@ -326,8 +331,8 @@ class ComposerStaticInit9ae2fb3389489985d6b367d43ed5b21e
         ),
         'League\\Uri\\' => 
         array (
-            0 => __DIR__ . '/..' . '/league/uri-interfaces/src',
-            1 => __DIR__ . '/..' . '/league/uri/src',
+            0 => __DIR__ . '/..' . '/league/uri/src',
+            1 => __DIR__ . '/..' . '/league/uri-interfaces/src',
         ),
         'League\\Tactician\\' => 
         array (
