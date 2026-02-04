@@ -25,7 +25,7 @@ jobs:
 
       - name: Generar documentación
         run: |
-          vendor/bin/phpdoc --config=phpdoc.dist.xml
+          vendor/bin/phpdoc -d src -t docs
 
       - name: Subir documentación generada
         uses: stefanzweifel/git-auto-commit-action@v4
