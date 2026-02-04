@@ -1,0 +1,22 @@
+# Archivos sensibles
+*.env
+config.php
+*.key
+*.pem
+
+# Archivos de logs
+*.log
+
+# Archivos temporales
+*.tmp
+*.cache
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Dependencias
+vendor/
+
+# Documentación generada
+docs/
