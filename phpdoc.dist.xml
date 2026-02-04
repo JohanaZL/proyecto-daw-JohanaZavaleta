@@ -11,17 +11,19 @@
 
     <versions>
         <version number="1.0.0">
-            <settings>
-                <visibility>public,protected,private</visibility>
-            </settings>
+            <folder>php</folder>
 
-            <paths>
-                <directory>php</directory>
-            </paths>
+            <apis>
+                <api>
+                    <source dsn="php" />
+                </api>
+            </apis>
 
-            <templates>
-                <template name="responsive-twig"/>
-            </templates>
+            <guides>
+                <guide>
+                    <source dsn="php" />
+                </guide>
+            </guides>
         </version>
     </versions>
 </phpdocumentor>
