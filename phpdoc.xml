@@ -6,11 +6,12 @@
 
   <paths>
     <output>docs</output>
+    <directories>
+      <directory>php</directory>
+    </directories>
   </paths>
 
   <templates>
     <template name="responsive-twig"/>
   </templates>
 </phpdocumentor>
-
-
