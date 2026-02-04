@@ -1,17 +1,27 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<phpdocumentor>
-  <configVersion>3</configVersion>
+<phpdocumentor
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="https://www.phpdoc.org/schema/phpdoc.xsd"
+    version="3.0"
+>
 
   <title>Documentación del Proyecto DAW</title>
 
   <paths>
     <output>docs</output>
-    <directories>
-      <directory>php</directory>
-    </directories>
+    <cache>cache</cache>
   </paths>
+
+  <versions>
+    <version number="1.0.0">
+      <api>
+        <source dsn="php/" />
+      </api>
+    </version>
+  </versions>
 
   <templates>
     <template name="responsive-twig"/>
   </templates>
+
 </phpdocumentor>
