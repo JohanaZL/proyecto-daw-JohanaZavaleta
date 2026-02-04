@@ -8,7 +8,6 @@ use phpDocumentor\Descriptor\DocumentDescriptor;
 use phpDocumentor\Descriptor\GuideSetDescriptor;
 use phpDocumentor\Guides\Event\PostParseDocument;
 use phpDocumentor\Guides\Nodes\DocumentNode;
-use phpDocumentor\Guides\Nodes\TitleNode;
 
 final class DocumentCollector
 {
@@ -18,10 +17,6 @@ final class DocumentCollector
 
     public function __invoke(PostParseDocument $event): void
     {
-        if (! ($event->getDocumentNode()->getTitle() instanceof TitleNode)) {
-            return;
-        }
-
         $this->addDocumentToDocumentationSet($event->getFileName(), $event->getDocumentNode());
     }
 
@@ -30,12 +25,12 @@ final class DocumentCollector
         DocumentNode $document,
     ): void {
         $this->guideSetDescriptor->addDocument(
-            $file,
+            $document->getFilePath(),
             new DocumentDescriptor(
                 $document,
                 $document->getHash(),
                 $file,
-                $document->getTitle()->getId(),
+                $document->getTitle()?->getId() ?? '',
             ),
         );
     }

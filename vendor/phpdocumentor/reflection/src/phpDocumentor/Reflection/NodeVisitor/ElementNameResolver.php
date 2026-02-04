@@ -13,9 +13,11 @@ declare(strict_types=1);
 
 namespace phpDocumentor\Reflection\NodeVisitor;
 
+use Override;
 use phpDocumentor\Reflection\Fqsen;
 use PhpParser\Node;
 use PhpParser\Node\Const_;
+use PhpParser\Node\PropertyItem;
 use PhpParser\Node\Stmt\Class_;
 use PhpParser\Node\Stmt\ClassConst;
 use PhpParser\Node\Stmt\ClassMethod;
@@ -30,11 +32,11 @@ use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitorAbstract;
 use SplDoublyLinkedList;
 
-use function get_class;
 use function rtrim;
 
 final class ElementNameResolver extends NodeVisitorAbstract
 {
+    /** @var SplDoublyLinkedList<Node\Identifier|string|null> */
     private SplDoublyLinkedList $parts;
 
     public function __construct()
@@ -47,6 +49,7 @@ final class ElementNameResolver extends NodeVisitorAbstract
      *
      * @inheritDoc
      */
+    #[Override]
     public function beforeTraverse(array $nodes)
     {
         $this->resetState('\\');
@@ -59,9 +62,10 @@ final class ElementNameResolver extends NodeVisitorAbstract
      *
      * @inheritDoc
      */
+    #[Override]
     public function leaveNode(Node $node)
     {
-        switch (get_class($node)) {
+        switch ($node::class) {
             case Namespace_::class:
             case Class_::class:
             case Enum_::class:
@@ -69,6 +73,8 @@ final class ElementNameResolver extends NodeVisitorAbstract
             case ClassMethod::class:
             case Trait_::class:
             case PropertyProperty::class:
+            case PropertyItem::class:
+            case Node\PropertyItem::class:
             case ClassConst::class:
             case Const_::class:
             case Interface_::class:
@@ -85,16 +91,11 @@ final class ElementNameResolver extends NodeVisitorAbstract
 
     /**
      * Adds fqsen property to a node when applicable.
-     *
-     * @todo this method is decorating the Node with an $fqsen property...
-     *       since we can't declare it in PhpParser/NodeAbstract,
-     *       we should add a decorator class wrapper in Reflection...
-     *       that should clear up the PHPSTAN errors about
-     *       "access to an undefined property ::$fqsen".
      */
-    public function enterNode(Node $node): ?int
+    #[Override]
+    public function enterNode(Node $node): int|null
     {
-        switch (get_class($node)) {
+        switch ($node::class) {
             case Namespace_::class:
                 if ($node->name === null) {
                     break;
@@ -133,6 +134,7 @@ final class ElementNameResolver extends NodeVisitorAbstract
                 $this->parts->push($node->name);
                 $this->setFqsen($node);
                 break;
+            case Node\PropertyItem::class:
             case PropertyProperty::class:
                 $this->parts->push('::$' . $node->name);
                 $this->setFqsen($node);
@@ -149,7 +151,7 @@ final class ElementNameResolver extends NodeVisitorAbstract
     /**
      * Resets the state of the object to an empty state.
      */
-    private function resetState(?string $namespace = null): void
+    private function resetState(string|null $namespace = null): void
     {
         $this->parts = new SplDoublyLinkedList();
         $this->parts->push($namespace);
@@ -160,18 +162,17 @@ final class ElementNameResolver extends NodeVisitorAbstract
      */
     private function buildName(): string
     {
-        $name = null;
+        $name = '';
         foreach ($this->parts as $part) {
             $name .= $part;
         }
 
-        return rtrim((string) $name, '\\');
+        return rtrim($name, '\\');
     }
 
     private function setFqsen(Node $node): void
     {
         $fqsen = new Fqsen($this->buildName());
-        $node->fqsen = $fqsen;
         $node->setAttribute('fqsen', $fqsen);
     }
 }

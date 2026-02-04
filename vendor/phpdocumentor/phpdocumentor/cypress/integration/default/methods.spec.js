@@ -178,6 +178,25 @@ describe('Showing methods for a class', function() {
                     .find('.phpdocumentor-signature__argument__variadic-operator')
                     .contains('...');
             });
+
+            it('Shows the default value links to type Sauce', function () {
+                cy.visit('build/default/classes/Marios-Pizza-Base.html');
+
+                getElementWithName('method', '__construct()')
+                    .find('.phpdocumentor-signature .phpdocumentor-signature__argument__type')
+                    .contains('a', 'Sauce')
+                    .should('have.attr', 'href', 'classes/Marios-Pizza-Sauce.html')
+                    .find('abbr')
+                    .should('have.attr', 'title', '\\Marios\\Pizza\\Sauce');
+
+                getElementWithName('method', '__construct()')
+                    .find('.phpdocumentor-signature .phpdocumentor-signature__argument__default-value')
+                    .should('contain.text', 'new Sauce()')
+                    .find('a')
+                    .should('have.attr', 'href', 'classes/Marios-Pizza-Sauce.html')
+                    .find('abbr')
+                    .should('have.attr', 'title', '\\Marios\\Pizza\\Sauce');
+            });
         });
     });
 
@@ -209,12 +228,23 @@ describe('Showing methods for a class', function() {
                 .find('.phpdocumentor-argument-list__heading')
                 .next()
                 .should('have.class', 'phpdocumentor-argument-list')
-                .contains('.phpdocumentor-signature__argument__name', '$pizzas')
-                .next('.phpdocumentor-signature__argument__return-type')
-                .contains('a', 'Pizza')
-                .should('have.attr', 'href', 'classes/Marios-Pizza.html')
-                .find('abbr')
-                .should('have.attr', 'title', '\\Marios\\Pizza');
+                .within(function () {
+                    // find the argument entry row that mentions the $pizzas parameter
+                    cy.contains('.phpdocumentor-argument-list__entry', '$pizzas')
+                        .as('pizzasEntry');
+
+                    // assert the name is present
+                    cy.get('@pizzasEntry')
+                        .find('.phpdocumentor-argument-list__argument__name')
+                        .contains('$pizzas');
+
+                    // assert there is a linked type pointing to the Pizza class (href + abbr title)
+                    cy.get('@pizzasEntry')
+                        .find('.phpdocumentor-argument-list__argument__type a')
+                        .should('have.attr', 'href', 'classes/Marios-Pizza.html')
+                        .find('abbr')
+                        .should('have.attr', 'title', '\\Marios\\Pizza');
+                });
         })
 
         it('Will show a parameter with a description', function () {
@@ -224,6 +254,30 @@ describe('Showing methods for a class', function() {
                 .contains('.phpdocumentor-argument-list__entry', '$pizza')
                 .next('.phpdocumentor-argument-list__definition')
                 .contains('.phpdocumentor-description', 'The specific pizza to place an order for.');
+        })
+
+        it('Will show default parameter value null without link', function () {
+            getElementWithName('method', 'setBestPizzaEver()')
+                .find('.phpdocumentor-argument-list__heading')
+                .next()
+                .should('have.class', 'phpdocumentor-argument-list')
+                .within(function () {
+                    // find the argument entry row that mentions the $pizzas parameter
+                    cy.contains('.phpdocumentor-argument-list__entry', 'pizza')
+                        .as('pizzaArgument');
+
+                    // assert the name is present
+                    cy.get('@pizzaArgument')
+                        .find('.phpdocumentor-argument-list__argument__name')
+                        .contains('$pizza');
+
+                    // assert there is a linked type pointing to the Pizza class (href + abbr title)
+                    cy.get('@pizzaArgument')
+                        .find('.phpdocumentor-argument-list__argument__default-value')
+                        .contains('null')
+                        .find('a')
+                        .should('not.exist');
+                });
         })
     });
 
@@ -317,5 +371,48 @@ describe('Showing methods for an interface', function() {
                 .next('.phpdocumentor-description')
                 .contains('the name of this product')
         })
+    });
+});
+
+describe('Showing methods for class with parent', function() {
+    beforeEach(function () {
+        cy.visit('build/default/classes/Marios-Pizza-Toppings-Pepperoni.html');
+    });
+
+    describe('Synopsis', function() {
+        it('Show the name', function () {
+            getElementWithName('method', 'publiclyAvailable()')
+                .should('be.visible');
+        });
+
+        it('Show the file name where the method points to parent class', function () {
+            getElementWithName('method', 'availableToAll()')
+                .find('.phpdocumentor-element-found-in__file')
+                .contains('a', 'Topping.php')
+                .find('abbr')
+                .should('have.attr', 'title', 'src/Pizza/Topping.php');
+        });
+
+        it('Links to the file documentation wherein the method points to parrent class', function () {
+            getElementWithName('method', 'availableToAll()')
+                .find('.phpdocumentor-element-found-in__file')
+                .contains('a', 'Topping.php')
+                .should('have.attr', 'href', 'files/src-pizza-topping.html');
+        });
+
+        it('Show the file name where the method points to current class', function () {
+            getElementWithName('method', 'publiclyAvailable()')
+                .find('.phpdocumentor-element-found-in__file')
+                .contains('a', 'Pepperoni.php')
+                .find('abbr')
+                .should('have.attr', 'title', 'src/Pizza/Toppings/Pepperoni.php');
+        });
+
+        it('Links to the file documentation wherein the method points to current class', function () {
+            getElementWithName('method', 'publiclyAvailable()')
+                .find('.phpdocumentor-element-found-in__file')
+                .contains('a', 'Pepperoni.php')
+                .should('have.attr', 'href', 'files/src-pizza-toppings-pepperoni.html');
+        });
     });
 });

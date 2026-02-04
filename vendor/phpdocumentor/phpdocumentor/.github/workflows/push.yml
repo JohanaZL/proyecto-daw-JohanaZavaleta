@@ -18,7 +18,7 @@ jobs:
     name: Composer checks and pre-warm
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup cache environment
         id: cache-env
@@ -29,7 +29,7 @@ jobs:
           key: ${{ env.key }}
 
       - name: Cache extensions
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ steps.cache-env.outputs.dir }}
           key: ${{ steps.cache-env.outputs.key }}
@@ -37,8 +37,6 @@ jobs:
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           php-version: ${{ env.defaultPHPVersion }}
           extensions: ${{ env.extensions }}
@@ -46,7 +44,7 @@ jobs:
           tools: composer-require-checker:4.6.0
 
       - name: Install Composer dependencies & cache dependencies
-        uses: "ramsey/composer-install@v2"
+        uses: "ramsey/composer-install@v3"
         with:
           composer-options: --optimize-autoloader
           # Bust the cache at least once a month - output format: YYYY-MM-DD.
@@ -60,7 +58,7 @@ jobs:
     name: Unit tests pre-flight
     needs: setup
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Setup cache environment
       id: cache-env
@@ -71,7 +69,7 @@ jobs:
         key: ${{ env.key }}
 
     - name: Cache extensions
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ${{ steps.cache-env.outputs.dir }}
         key: ${{ steps.cache-env.outputs.key }}
@@ -79,8 +77,6 @@ jobs:
 
     - name: Setup PHP
       uses: shivammathur/setup-php@v2
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         php-version: ${{ env.defaultPHPVersion }}
         extensions: ${{ env.extensions }}
@@ -88,7 +84,7 @@ jobs:
         tools: pecl
 
     - name: Install Composer dependencies & cache dependencies
-      uses: "ramsey/composer-install@v2"
+      uses: "ramsey/composer-install@v3"
       with:
         composer-options: --optimize-autoloader
         # Bust the cache at least once a month - output format: YYYY-MM-DD.
@@ -106,7 +102,7 @@ jobs:
     needs:
       - setup
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup cache environment
         id: cache-env
@@ -117,7 +113,7 @@ jobs:
           key: ${{ env.key }}
 
       - name: Cache extensions
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ steps.cache-env.outputs.dir }}
           key: ${{ steps.cache-env.outputs.key }}
@@ -125,8 +121,6 @@ jobs:
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           php-version: ${{ env.defaultPHPVersion }}
           extensions: ${{ env.extensions }}
@@ -134,7 +128,7 @@ jobs:
           tools: cs2pr
 
       - name: Install Composer dependencies & cache dependencies
-        uses: "ramsey/composer-install@v2"
+        uses: "ramsey/composer-install@v3"
         with:
           composer-options: --optimize-autoloader
           # Bust the cache at least once a month - output format: YYYY-MM-DD.
@@ -149,7 +143,7 @@ jobs:
     needs:
       - setup
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup cache environment
         id: cache-env
@@ -160,7 +154,7 @@ jobs:
           key: ${{ env.key }}
 
       - name: Cache extensions
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ steps.cache-env.outputs.dir }}
           key: ${{ steps.cache-env.outputs.key }}
@@ -168,8 +162,6 @@ jobs:
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           php-version: ${{ env.defaultPHPVersion }}
           extensions: ${{ env.extensions }}
@@ -177,7 +169,7 @@ jobs:
           tools: pecl
 
       - name: Install Composer dependencies & cache dependencies
-        uses: "ramsey/composer-install@v2"
+        uses: "ramsey/composer-install@v3"
         with:
           composer-options: --optimize-autoloader
           # Bust the cache at least once a month - output format: YYYY-MM-DD.
@@ -186,55 +178,13 @@ jobs:
       - name: phpstan
         run: ./bin/phpstan analyse src tests --configuration phpstan.neon
 
-  psalm:
-    runs-on: ubuntu-latest
-    name: Psalm
-    needs: [setup]
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup cache environment
-        id: cache-env
-        uses: shivammathur/cache-extensions@v1
-        with:
-          php-version: ${{ env.defaultPHPVersion }}
-          extensions: ${{ env.extensions }}
-          key: ${{ env.key }}
-
-      - name: Cache extensions
-        uses: actions/cache@v3
-        with:
-          path: ${{ steps.cache-env.outputs.dir }}
-          key: ${{ steps.cache-env.outputs.key }}
-          restore-keys: ${{ steps.cache-env.outputs.key }}
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          php-version: ${{ env.defaultPHPVersion }}
-          extensions: ${{ env.extensions }}
-          ini-values: memory_limit=2G, display_errors=On, error_reporting=-1
-          tools: pecl
-
-      - name: Install Composer dependencies & cache dependencies
-        uses: "ramsey/composer-install@v2"
-        with:
-          composer-options: --optimize-autoloader
-          # Bust the cache at least once a month - output format: YYYY-MM-DD.
-          custom-cache-suffix: $(date -u -d "-0 month -$(($(date +%d)-1)) days" "+%F")
-
-      - name: Psalm
-        run: php bin/psalm.phar --output-format=github
-
   build-phar:
     runs-on: ubuntu-latest
     name: Build PHAR
     needs:
       - setup
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           set-safe-directory: '/github/workspace'
           fetch-depth: 0
@@ -249,7 +199,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload PHAR file
-        uses: actions/upload-artifact@v3.1.3
+        uses: actions/upload-artifact@v5.0.0
         with:
           name: phpDocumentor.phar
           path: build/phpDocumentor.phar
@@ -266,6 +216,13 @@ jobs:
         php-versions:
           - '8.1'
           - '8.2'
+          - '8.3'
+          - '8.4'
+          - '8.5'
+        testsuite:
+          - 'unit'
+          - 'integration'
+#          - 'cli'
         exclude: # already covered in pre-test with coverage above
           - operating-system: 'ubuntu-latest'
             php-versions: '8.1'
@@ -275,7 +232,7 @@ jobs:
     - phpstan
     - codestyle
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Setup cache environment
       id: cache-env
       uses: shivammathur/cache-extensions@v1
@@ -285,7 +242,7 @@ jobs:
         key: ${{ env.key }}
 
     - name: Cache extensions
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ${{ steps.cache-env.outputs.dir }}
         key: ${{ steps.cache-env.outputs.key }}
@@ -293,22 +250,20 @@ jobs:
 
     - name: Setup PHP
       uses: shivammathur/setup-php@v2
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         php-version: ${{ matrix.php-versions }}
         extensions: ${{ env.extensions }}
         ini-values: memory_limit=2G, display_errors=On, error_reporting=-1
 
     - name: Install Composer dependencies & cache dependencies
-      uses: "ramsey/composer-install@v2"
+      uses: "ramsey/composer-install@v3"
       with:
         composer-options: --optimize-autoloader
         # Bust the cache at least once a month - output format: YYYY-MM-DD.
         custom-cache-suffix: $(date -u -d "-0 month -$(($(date +%d)-1)) days" "+%F")
 
     - name: Run PHPUnit
-      run: ./bin/phpunit --testsuite=unit,integration
+      run: ./bin/phpunit --testsuite=${{ matrix.testsuite }} --no-coverage
 
   e2e:
     runs-on: ubuntu-latest
@@ -322,7 +277,7 @@ jobs:
     needs:
       - setup
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup cache environment
         id: cache-env
@@ -333,7 +288,7 @@ jobs:
           key: ${{ env.key }}
 
       - name: Cache extensions
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ steps.cache-env.outputs.dir }}
           key: ${{ steps.cache-env.outputs.key }}
@@ -341,8 +296,6 @@ jobs:
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           php-version: ${{ env.defaultPHPVersion }}
           extensions: ${{ env.extensions }}
@@ -350,7 +303,7 @@ jobs:
           tools: pecl
 
       - name: Install Composer dependencies & cache dependencies
-        uses: "ramsey/composer-install@v2"
+        uses: "ramsey/composer-install@v3"
         with:
           composer-options: --optimize-autoloader
           # Bust the cache at least once a month - output format: YYYY-MM-DD.
@@ -377,15 +330,22 @@ jobs:
         php-versions:
           - '8.1'
           - '8.2'
+          - '8.3'
+          - '8.4'
+          - '8.5'
         operating-system:
           - ubuntu-latest
           - windows-latest
           - macOS-latest
+        command:
+          - 'run'
+          - 'settings:list'
+          - '--template default'
     name: Smoke tests
     needs:
       - build-phar
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup cache environment
         id: cache-env
@@ -396,7 +356,7 @@ jobs:
           key: ${{ env.key }}
 
       - name: Cache extensions
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ steps.cache-env.outputs.dir }}
           key: ${{ steps.cache-env.outputs.key }}
@@ -404,8 +364,6 @@ jobs:
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           php-version: ${{ matrix.php-versions }}
           extensions: ${{ env.extensions }}
@@ -413,7 +371,7 @@ jobs:
           tools: pecl
 
       - name: Download PHAR file
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v6
         with:
           name: phpDocumentor.phar
           path: build
@@ -422,7 +380,7 @@ jobs:
         run: php ./build/phpDocumentor.phar --version
 
       - name: Run phpDocumentor on itself
-        run: php ./build/phpDocumentor.phar -vvv --setting="guides.enabled=false"
+        run: php ./build/phpDocumentor.phar ${{ matrix.command }}
 
   e2e-matrix:
     runs-on: ${{ matrix.operating-system }}
@@ -435,6 +393,9 @@ jobs:
         php-versions:
           - '8.1'
           - '8.2'
+          - '8.3'
+          - '8.4'
+          - '8.5'
         operating-system:
           - ubuntu-latest
           - windows-latest
@@ -444,7 +405,7 @@ jobs:
       - e2e
       - smoke-tests
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup cache environment
         id: cache-env
@@ -455,7 +416,7 @@ jobs:
           key: ${{ env.key }}
 
       - name: Cache extensions
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ steps.cache-env.outputs.dir }}
           key: ${{ steps.cache-env.outputs.key }}
@@ -463,8 +424,6 @@ jobs:
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           php-version: ${{ matrix.php-versions }}
           extensions: ${{ env.extensions }}
@@ -472,7 +431,7 @@ jobs:
           tools: pecl
 
       - name: Download PHAR file
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v6
         with:
           name: phpDocumentor.phar
           path: build
@@ -499,7 +458,7 @@ jobs:
       - phpunit
     steps:
       - name: Trigger
-        uses: benc-uk/workflow-dispatch@v121
+        uses: benc-uk/workflow-dispatch@v1.2.4
         with:
           workflow: Website
           token: ${{ secrets.BOT_TOKEN }}
@@ -513,7 +472,8 @@ jobs:
       - phpunit
     steps:
       - name: Trigger
-        uses: benc-uk/workflow-dispatch@v121
+        uses: benc-uk/workflow-dispatch@v1.2.4
         with:
           workflow: Docker build
           token: ${{ secrets.BOT_TOKEN }}
+          inputs: '{"nightly": "true", "tags": "3-unstable"}'

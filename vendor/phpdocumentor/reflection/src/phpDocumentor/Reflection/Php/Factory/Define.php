@@ -13,10 +13,13 @@ declare(strict_types=1);
 
 namespace phpDocumentor\Reflection\Php\Factory;
 
+use Override;
 use phpDocumentor\Reflection\DocBlockFactoryInterface;
 use phpDocumentor\Reflection\Fqsen;
 use phpDocumentor\Reflection\Location;
 use phpDocumentor\Reflection\Php\Constant as ConstantElement;
+use phpDocumentor\Reflection\Php\Expression as ValueExpression;
+use phpDocumentor\Reflection\Php\Expression\ExpressionPrinter;
 use phpDocumentor\Reflection\Php\File as FileElement;
 use phpDocumentor\Reflection\Php\StrategyContainer;
 use phpDocumentor\Reflection\Php\ValueEvaluator\ConstantEvaluator;
@@ -30,7 +33,9 @@ use PhpParser\Node\VariadicPlaceholder;
 use PhpParser\PrettyPrinter\Standard as PrettyPrinter;
 
 use function assert;
+use function is_string;
 use function sprintf;
+use function str_starts_with;
 
 /**
  * Strategy to convert `define` expressions to ConstantElement
@@ -40,23 +45,18 @@ use function sprintf;
  */
 final class Define extends AbstractFactory
 {
-    private PrettyPrinter $valueConverter;
-
-    private ConstantEvaluator $constantEvaluator;
-
     /**
      * Initializes the object.
      */
     public function __construct(
         DocBlockFactoryInterface $docBlockFactory,
-        PrettyPrinter $prettyPrinter,
-        ?ConstantEvaluator $constantEvaluator = null
+        private readonly PrettyPrinter $valueConverter,
+        private readonly ConstantEvaluator $constantEvaluator = new ConstantEvaluator(),
     ) {
         parent::__construct($docBlockFactory);
-        $this->valueConverter = $prettyPrinter;
-        $this->constantEvaluator = $constantEvaluator ?? new ConstantEvaluator();
     }
 
+    #[Override]
     public function matches(ContextStack $context, object $object): bool
     {
         if (!$object instanceof Expression) {
@@ -84,11 +84,12 @@ final class Define extends AbstractFactory
      * @param Expression $object object to convert to an Element
      * @param StrategyContainer $strategies used to convert nested objects.
      */
+    #[Override]
     protected function doCreate(
         ContextStack $context,
         object $object,
-        StrategyContainer $strategies
-    ): void {
+        StrategyContainer $strategies,
+    ): object|null {
         $expression = $object->expr;
         assert($expression instanceof FuncCall);
 
@@ -96,7 +97,7 @@ final class Define extends AbstractFactory
 
         //We cannot calculate the name of a variadic consuming define.
         if ($name instanceof VariadicPlaceholder || $value instanceof VariadicPlaceholder) {
-            return;
+            return null;
         }
 
         $file = $context->search(FileElement::class);
@@ -104,7 +105,7 @@ final class Define extends AbstractFactory
 
         $fqsen = $this->determineFqsen($name, $context);
         if ($fqsen === null) {
-            return;
+            return null;
         }
 
         $constant = new ConstantElement(
@@ -112,31 +113,42 @@ final class Define extends AbstractFactory
             $this->createDocBlock($object->getDocComment(), $context->getTypeContext()),
             $this->determineValue($value),
             new Location($object->getLine()),
-            new Location($object->getEndLine())
+            new Location($object->getEndLine()),
         );
 
         $file->addConstant($constant);
+
+        return $constant;
     }
 
-    private function determineValue(?Arg $value): ?string
+    private function determineValue(Arg|null $value): ValueExpression|null
     {
         if ($value === null) {
             return null;
         }
 
-        return $this->valueConverter->prettyPrintExpr($value->value);
+        $expression = $this->valueConverter->prettyPrintExpr($value->value);
+        if ($this->valueConverter instanceof ExpressionPrinter) {
+            $expression = new ValueExpression($expression, $this->valueConverter->getParts());
+        }
+
+        if (is_string($expression)) {
+            $expression = new ValueExpression($expression, []);
+        }
+
+        return $expression;
     }
 
-    private function determineFqsen(Arg $name, ContextStack $context): ?Fqsen
+    private function determineFqsen(Arg $name, ContextStack $context): Fqsen|null
     {
         return $this->fqsenFromExpression($name->value, $context);
     }
 
-    private function fqsenFromExpression(Expr $nameString, ContextStack $context): ?Fqsen
+    private function fqsenFromExpression(Expr $nameString, ContextStack $context): Fqsen|null
     {
         try {
             return $this->fqsenFromString($this->constantEvaluator->evaluate($nameString, $context));
-        } catch (ConstExprEvaluationException $e) {
+        } catch (ConstExprEvaluationException) {
             //Ignore any errors as we cannot evaluate all expressions
             return null;
         }

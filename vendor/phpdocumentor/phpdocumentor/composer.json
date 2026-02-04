@@ -19,13 +19,20 @@
                 "tests/integration/phpDocumentor/",
                 "tests/functional/phpDocumentor/"
             ],
+            "TwigCsFixer\\": [
+                "tests/twig-cs-fixer/"
+            ],
             "Prophecy\\" : [
                 "tests/unit/Prophecy"
             ]
         }
     },
     "repositories": [
-        { "type": "path", "url": "incubator/json-path" }
+        {
+            "type": "path",
+            "url": "incubator/json-path",
+            "canonical": false
+        }
     ],
     "require": {
         "php": "^8.1",
@@ -40,26 +47,27 @@
         "jean85/pretty-package-versions": "^1.5 || ^2.0.1",
         "league/commonmark": "^2.2",
         "league/flysystem": "^1.0",
-        "league/pipeline": "^1.0",
         "league/tactician": "^1.0",
-        "league/uri": "^6.7",
-        "league/uri-interfaces": "^2.0",
+        "league/uri": "^7.5",
+        "league/uri-interfaces": "^7.5",
         "monolog/monolog": "^2.9",
-        "nikic/php-parser": "^4.14",
+        "nikic/php-parser": "^5.0",
         "phar-io/manifest": "^2.0",
         "phar-io/version": "^3.2",
+        "phpdocumentor/filesystem": "^1.7",
         "phpdocumentor/flyfinder": "^1.0",
         "phpdocumentor/graphviz": "^2.0",
-        "phpdocumentor/guides": "^0.2.0",
-        "phpdocumentor/guides-graphs": "^0.2.0",
-        "phpdocumentor/guides-markdown": "^0.2.0",
-        "phpdocumentor/guides-restructured-text": "^0.2.0",
-        "phpdocumentor/json-path": "*@dev",
-        "phpdocumentor/reflection": "^5.3",
+        "phpdocumentor/guides": "^1.7",
+        "phpdocumentor/guides-graphs": "^1.7",
+        "phpdocumentor/guides-markdown": "^1.7",
+        "phpdocumentor/guides-restructured-text": "^1.7",
+        "phpdocumentor/json-path": "^0.2.1",
+        "phpdocumentor/reflection": "^6.4.4",
         "phpdocumentor/reflection-common": "^2.0",
-        "phpdocumentor/reflection-docblock": "^5.3",
-        "phpdocumentor/type-resolver": "^1.7",
+        "phpdocumentor/reflection-docblock": "^5.4",
+        "phpdocumentor/type-resolver": "^1.8",
         "psr/cache": "^2.0|^3.0",
+        "psr/event-dispatcher": "^1.0",
         "psr/log": "^1.1",
         "symfony/cache": "^6.0",
         "symfony/config": "^6.0",
@@ -78,23 +86,23 @@
         "symfony/stopwatch": "^6.0",
         "symfony/string": "^6.0",
         "symfony/yaml": "^6.0",
-        "twig/twig": "~2.0",
+        "twig/twig": "^3.17",
         "webmozart/assert": "^1.3"
     },
     "minimum-stability": "stable",
     "require-dev": {
-        "doctrine/coding-standard": "^12.0",
+        "doctrine/coding-standard": "^13.0",
         "fakerphp/faker": "^1.21",
         "mikey179/vfsstream": "^1.2",
         "mockery/mockery": "^1.0",
-        "phpspec/prophecy-phpunit": "^2.0",
+        "phpspec/prophecy-phpunit": "^2.2",
         "phpstan/extension-installer": "^1.3",
         "phpstan/phpstan": "^1.10",
         "phpstan/phpstan-webmozart-assert": "^1.2",
-        "phpunit/phpunit": "^9.5",
-        "psalm/phar": "^4.17",
-        "rector/rector": "^0.17.6",
-        "symfony/var-dumper": "^6.0"
+        "phpunit/phpunit": "^10.0",
+        "rector/rector": "^1.2.5",
+        "symfony/var-dumper": "^6.0",
+        "vincentlanglet/twig-cs-fixer": "^3.5"
     },
     "config": {
         "bin-dir": "bin/",
@@ -120,7 +128,8 @@
     },
     "bin": ["bin/phpdoc", "bin/phpdoc.php"],
     "conflict": {
-        "symfony/symfony": "*"
+        "symfony/symfony": "*",
+        "phpdocumentor/reflection-docblock": "5.4.0"
     },
     "extra": {
         "branch-alias": {

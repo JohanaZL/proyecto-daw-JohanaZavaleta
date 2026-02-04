@@ -16,7 +16,7 @@ namespace phpDocumentor\Guides\Nodes;
 use phpDocumentor\Guides\Nodes\Inline\PlainTextInlineNode;
 
 /** @extends CompoundNode<InlineCompoundNode> */
-class TitleNode extends CompoundNode
+final class TitleNode extends CompoundNode
 {
     protected string $target = '';
 
@@ -25,14 +25,26 @@ class TitleNode extends CompoundNode
         parent::__construct([$value]);
     }
 
+    public static function fromString(string $titleString): self
+    {
+        return new TitleNode(new InlineCompoundNode([new PlainTextInlineNode($titleString)]), 1, '');
+    }
+
     public static function emptyNode(): self
     {
-        return new TitleNode(new InlineCompoundNode([new PlainTextInlineNode('<Unknown>')]), 1, '');
+        return self::fromString('<Unknown>');
     }
 
     public function getLevel(): int
     {
         return $this->level;
+    }
+
+    public function setLevel(int $level): TitleNode
+    {
+        $this->level = $level;
+
+        return $this;
     }
 
     public function setTarget(string $target): void

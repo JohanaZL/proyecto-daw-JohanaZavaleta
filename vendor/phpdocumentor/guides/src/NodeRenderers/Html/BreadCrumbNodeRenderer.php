@@ -2,24 +2,36 @@
 
 declare(strict_types=1);
 
+/**
+ * This file is part of phpDocumentor.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @link https://phpdoc.org
+ */
+
 namespace phpDocumentor\Guides\NodeRenderers\Html;
 
 use phpDocumentor\Guides\NodeRenderers\NodeRenderer;
 use phpDocumentor\Guides\Nodes\BreadCrumbNode;
 use phpDocumentor\Guides\Nodes\DocumentTree\DocumentEntryNode;
+use phpDocumentor\Guides\Nodes\Menu\InternalMenuEntryNode;
 use phpDocumentor\Guides\Nodes\Menu\MenuEntryNode;
 use phpDocumentor\Guides\Nodes\Node;
+use phpDocumentor\Guides\Nodes\TitleNode;
 use phpDocumentor\Guides\RenderContext;
 use phpDocumentor\Guides\TemplateRenderer;
 
 use function array_reverse;
 use function assert;
+use function is_a;
 
 /**
  * @template T as Node
  * @implements NodeRenderer<BreadCrumbNode>
  */
-class BreadCrumbNodeRenderer implements NodeRenderer
+final class BreadCrumbNodeRenderer implements NodeRenderer
 {
     private string $template = 'body/menu/breadcrumb.html.twig';
 
@@ -28,9 +40,9 @@ class BreadCrumbNodeRenderer implements NodeRenderer
     ) {
     }
 
-    public function supports(Node $node): bool
+    public function supports(string $nodeFqcn): bool
     {
-        return $node instanceof BreadCrumbNode;
+        return $nodeFqcn === BreadCrumbNode::class || is_a($nodeFqcn, BreadCrumbNode::class, true);
     }
     
     /** @param T $node */
@@ -96,9 +108,15 @@ class BreadCrumbNodeRenderer implements NodeRenderer
         int $level,
         bool $isCurrent,
     ): array {
-        $entry = new MenuEntryNode(
+        $title = $documentEntry->getTitle();
+        $navigationTitle =  $documentEntry->getAdditionalData('navigationTitle');
+        if ($navigationTitle instanceof TitleNode) {
+            $title = $navigationTitle;
+        }
+
+        $entry = new InternalMenuEntryNode(
             $documentEntry->getFile(),
-            $documentEntry->getTitle(),
+            $title,
             [],
             false,
             $level,

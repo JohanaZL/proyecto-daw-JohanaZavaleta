@@ -35,11 +35,11 @@ class ConstantAssembler extends AssemblerAbstract
      *
      * @param Constant $data
      */
-    public function create(object $data): ConstantInterface
+    public function buildDescriptor(object $data): ConstantInterface
     {
         $constantDescriptor = new ConstantDescriptor();
         $constantDescriptor->setName($data->getName());
-        $constantDescriptor->setValue($data->getValue());
+        $constantDescriptor->setValue($data->getValue(false));
         $constantDescriptor->setFinal($data->isFinal());
         // Reflection library formulates namespace as global but this is not wanted for phpDocumentor itself
 
@@ -53,7 +53,6 @@ class ConstantAssembler extends AssemblerAbstract
 
         $constantDescriptor->setStartLocation($data->getLocation());
         $constantDescriptor->setEndLocation($data->getEndLocation());
-        $constantDescriptor->setVisibility((string) $data->getVisibility() ?: 'public');
 
         return $constantDescriptor;
     }

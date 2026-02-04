@@ -15,20 +15,20 @@ namespace phpDocumentor\Reflection\Php;
 
 use phpDocumentor\Reflection\Element;
 use phpDocumentor\Reflection\Metadata\MetaDataContainer as MetaDataContainerInterface;
+use PHPUnit\Framework\Attributes\CoversFunction;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase as BaseTestCase;
 
 /**
  * Base test case for all elements.
  */
+#[CoversFunction('getLocation')]
+#[CoversFunction('getEndLocation')]
+#[UsesClass('\phpDocumentor\Reflection\Location')]
 abstract class TestCase extends BaseTestCase
 {
-    /** @var Element|MetaDataContainerInterface */
-    protected $fixture;
+    protected Element|MetaDataContainerInterface $fixture;
 
-    /**
-     * @covers ::getLocation
-     * @covers ::getEndLocation
-     */
     public function testLineNumberIsMinusOneWhenNoneIsProvided(): void
     {
         $this->assertSame(-1, $this->fixture->getLocation()->getLineNumber());
@@ -38,20 +38,11 @@ abstract class TestCase extends BaseTestCase
         $this->assertSame(0, $this->fixture->getEndLocation()->getColumnNumber());
     }
 
-    /**
-     * @uses \phpDocumentor\Reflection\Location
-     *
-     * @covers ::getLocation
-     * @covers ::getEndLocation
-     */
     public function testLineAndColumnNumberIsReturnedWhenALocationIsProvided(): void
     {
     }
 
-    /**
-     * @param Element|MetaDataContainerInterface $fixture
-     */
-    protected function assertLineAndColumnNumberIsReturnedWhenALocationIsProvided($fixture): void
+    protected function assertLineAndColumnNumberIsReturnedWhenALocationIsProvided(Element|MetaDataContainerInterface $fixture): void
     {
         $this->assertSame(100, $fixture->getLocation()->getLineNumber());
         $this->assertSame(20, $fixture->getLocation()->getColumnNumber());

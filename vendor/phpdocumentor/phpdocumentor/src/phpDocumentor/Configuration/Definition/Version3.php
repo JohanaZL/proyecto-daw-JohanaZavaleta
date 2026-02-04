@@ -45,7 +45,8 @@ use function var_export;
  *     examples?: array{dsn: string, paths: array<string>},
  *     include-source: bool,
  *     validate: bool,
- *     visibility: non-empty-array<array-key, string>
+ *     visibility: non-empty-array<array-key, string>,
+ *     ignore-packages: bool
  * }
  * @psalm-type ConfigurationMap = array{
  *     configVersion: string,
@@ -66,7 +67,7 @@ use function var_export;
  *             >
  *         }
  *     >,
- *     use-cache: bool,
+ *     use_cache: bool,
  *     settings: array<string, mixed>,
  *     templates: non-empty-array<
  *         array{
@@ -97,7 +98,7 @@ final class Version3 implements ConfigurationInterface, Normalizable
             ->children()
                 ->scalarNode(SymfonyConfigFactory::FIELD_CONFIG_VERSION)->defaultValue('3')->end()
                 ->scalarNode('title')->defaultValue('Documentation')->end()
-                ->booleanNode('use-cache')->defaultTrue()->end()
+                ->booleanNode('use_cache')->defaultTrue()->end()
                 ->arrayNode('paths')
                     ->addDefaultsIfNotSet()
                     ->children()
@@ -244,6 +245,10 @@ final class Version3 implements ConfigurationInterface, Normalizable
                         ->info('In which language is your code written?')
                         ->values(['php'])
                         ->defaultValue('php')
+                    ->end()
+                    ->booleanNode('ignore-packages')
+                        ->info('Whether to ignore packages in the documentation')
+                        ->defaultFalse()
                     ->end()
                     ->arrayNode('visibilities')
                         ->prototype('enum')

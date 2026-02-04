@@ -2,9 +2,18 @@
 
 declare(strict_types=1);
 
+/**
+ * This file is part of phpDocumentor.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @link https://phpdoc.org
+ */
+
 namespace phpDocumentor\Guides\Compiler\NodeTransformers;
 
-use phpDocumentor\Guides\Compiler\CompilerContext;
+use phpDocumentor\Guides\Compiler\CompilerContextInterface;
 use phpDocumentor\Guides\Compiler\NodeTransformer;
 use phpDocumentor\Guides\Nodes\DocumentBlockNode;
 use phpDocumentor\Guides\Nodes\Menu\TocNode;
@@ -16,14 +25,14 @@ use phpDocumentor\Guides\Nodes\Node;
  * The "class" directive sets the "classes" attribute value on its content or on the first immediately following
  * non-comment element. https://docutils.sourceforge.io/docs/ref/rst/directives.html#class
  */
-class DocumentBlockNodeTransformer implements NodeTransformer
+final class DocumentBlockNodeTransformer implements NodeTransformer
 {
-    public function enterNode(Node $node, CompilerContext $compilerContext): Node
+    public function enterNode(Node $node, CompilerContextInterface $compilerContext): Node
     {
         return $node;
     }
 
-    public function leaveNode(Node $node, CompilerContext $compilerContext): Node|null
+    public function leaveNode(Node $node, CompilerContextInterface $compilerContext): Node|null
     {
         if ($node instanceof DocumentBlockNode) {
             $children = [];

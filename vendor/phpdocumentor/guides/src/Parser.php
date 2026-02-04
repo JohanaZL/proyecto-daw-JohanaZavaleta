@@ -13,11 +13,12 @@ declare(strict_types=1);
 
 namespace phpDocumentor\Guides;
 
-use League\Flysystem\Adapter\Local;
-use League\Flysystem\Filesystem;
 use League\Flysystem\FilesystemInterface;
+use phpDocumentor\FileSystem\FileSystem as FileSystemAlias;
+use phpDocumentor\FileSystem\FlySystemAdapter;
 use phpDocumentor\Guides\Nodes\DocumentNode;
 use phpDocumentor\Guides\Nodes\ProjectNode;
+use phpDocumentor\Guides\ReferenceResolvers\DocumentNameResolverInterface;
 use RuntimeException;
 use Webmozart\Assert\Assert;
 
@@ -36,7 +37,7 @@ final class Parser
 
     /** @param iterable<MarkupLanguageParser> $parserStrategies */
     public function __construct(
-        private readonly UrlGeneratorInterface $urlGenerator,
+        private readonly DocumentNameResolverInterface $documentNameResolver,
         iterable $parserStrategies,
     ) {
         foreach ($parserStrategies as $strategy) {
@@ -49,12 +50,9 @@ final class Parser
         $this->parserStrategies[] = $strategy;
     }
 
-    /**
-     * @psalm-assert ParserContext $this->parserContext
-     * @psalm-assert Metas $this->metas
-     */
+    /** @psalm-assert ParserContext $this->parserContext */
     public function prepare(
-        FilesystemInterface|null $origin,
+        FilesystemInterface|FileSystemAlias|null $origin,
         string $sourcePath,
         string $fileName,
         ProjectNode $projectNode,
@@ -63,7 +61,7 @@ final class Parser
         if ($origin === null) {
             $cwd = getcwd();
             Assert::string($cwd);
-            $origin = new Filesystem(new Local($cwd));
+            $origin = FlySystemAdapter::createForPath($cwd);
         }
 
         $this->parserContext = $this->createParserContext(
@@ -88,7 +86,6 @@ final class Parser
         $parser = $this->determineParser($inputFormat);
 
         $document = $parser->parse($this->parserContext, $text);
-        $document->setLinks($this->parserContext->getLinks());
 
         $this->parserContext = null;
 
@@ -109,7 +106,7 @@ final class Parser
     private function createParserContext(
         string $sourcePath,
         string $file,
-        FilesystemInterface $origin,
+        FilesystemInterface|FileSystemAlias $origin,
         int $initialHeaderLevel,
         ProjectNode $projectNode,
     ): ParserContext {
@@ -119,7 +116,7 @@ final class Parser
             $sourcePath,
             $initialHeaderLevel,
             $origin,
-            $this->urlGenerator,
+            $this->documentNameResolver,
         );
     }
 }

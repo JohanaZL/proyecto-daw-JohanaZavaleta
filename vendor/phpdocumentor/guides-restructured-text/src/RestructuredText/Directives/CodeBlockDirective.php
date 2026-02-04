@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+/**
+ * This file is part of phpDocumentor.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @link https://phpdoc.org
+ */
+
 namespace phpDocumentor\Guides\RestructuredText\Directives;
 
 use phpDocumentor\Guides\Nodes\CodeNode;
@@ -9,7 +18,7 @@ use phpDocumentor\Guides\Nodes\Node;
 use phpDocumentor\Guides\RestructuredText\Directives\OptionMapper\CodeNodeOptionMapper;
 use phpDocumentor\Guides\RestructuredText\Parser\BlockContext;
 use phpDocumentor\Guides\RestructuredText\Parser\Directive;
-use phpDocumentor\Guides\RestructuredText\Parser\DirectiveOption;
+use Psr\Log\LoggerInterface;
 
 use function trim;
 
@@ -24,10 +33,12 @@ use function trim;
  *
  * @link https://www.sphinx-doc.org/en/master/usage/restructuredtext/directives.html#directive-code-block
  */
-class CodeBlockDirective extends BaseDirective
+final class CodeBlockDirective extends BaseDirective
 {
-    public function __construct(private readonly CodeNodeOptionMapper $codeNodeOptionMapper)
-    {
+    public function __construct(
+        private readonly LoggerInterface $logger,
+        private readonly CodeNodeOptionMapper $codeNodeOptionMapper,
+    ) {
     }
 
     public function getName(): string
@@ -38,7 +49,7 @@ class CodeBlockDirective extends BaseDirective
     /** {@inheritDoc} */
     public function getAliases(): array
     {
-        return ['code'];
+        return ['code', 'parsed-literal'];
     }
 
     /** {@inheritDoc} */
@@ -46,6 +57,12 @@ class CodeBlockDirective extends BaseDirective
         BlockContext $blockContext,
         Directive $directive,
     ): Node|null {
+        if ($blockContext->getDocumentIterator()->isEmpty()) {
+            $this->logger->warning('The code-block has no content. Did you properly indent the code? ', $blockContext->getLoggerInformation());
+
+            return null;
+        }
+
         $node = new CodeNode(
             $blockContext->getDocumentIterator()->toArray(),
         );
@@ -56,9 +73,7 @@ class CodeBlockDirective extends BaseDirective
             $node->setLanguage($blockContext->getDocumentParserContext()->getCodeBlockDefaultLanguage());
         }
 
-        $this->setStartingLineNumberBasedOnOptions($directive->getOptions(), $node);
-        $this->setCaptionBasedOnOptions($directive->getOptions(), $node);
-        $this->codeNodeOptionMapper->apply($node, $directive->getOptions());
+        $this->codeNodeOptionMapper->apply($node, $directive->getOptions(), $blockContext);
 
         if ($directive->getVariable() !== '') {
             $document = $blockContext->getDocumentParserContext()->getDocument();
@@ -68,33 +83,5 @@ class CodeBlockDirective extends BaseDirective
         }
 
         return $node;
-    }
-
-    /** @param mixed[] $options */
-    private function setStartingLineNumberBasedOnOptions(array $options, CodeNode $node): void
-    {
-        $startingLineNumber = null;
-        if (isset($options['linenos'])) {
-            $startingLineNumber = 1;
-        }
-
-        $startingLineNumber = $options['number-lines'] ?? $options['lineno-start'] ?? $startingLineNumber;
-
-        if ($startingLineNumber === null) {
-            return;
-        }
-
-        $node->setStartingLineNumber((int) $startingLineNumber);
-    }
-
-    /** @param DirectiveOption[] $options */
-    private function setCaptionBasedOnOptions(array $options, CodeNode $node): void
-    {
-        $caption = null;
-        if (isset($options['caption'])) {
-            $caption = (string) $options['caption']->getValue();
-        }
-
-        $node->setCaption($caption);
     }
 }

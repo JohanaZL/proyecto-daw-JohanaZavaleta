@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+/**
+ * This file is part of phpDocumentor.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @link https://phpdoc.org
+ */
+
 namespace phpDocumentor\Guides\RestructuredText\Parser\Productions\InlineRules;
 
 use phpDocumentor\Guides\Nodes\Inline\LiteralInlineNode;
@@ -14,8 +23,13 @@ use function substr;
 /**
  * Rule for literals such as ``something``
  */
-class LiteralRule extends AbstractInlineRule
+final class LiteralRule extends AbstractInlineRule implements CachableInlineRule
 {
+    public function getToken(): int
+    {
+        return InlineLexer::LITERAL;
+    }
+
     public function applies(InlineLexer $lexer): bool
     {
         return $lexer->token?->type === InlineLexer::LITERAL;

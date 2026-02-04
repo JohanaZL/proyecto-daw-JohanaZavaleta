@@ -10,18 +10,12 @@ use phpDocumentor\Reflection\Php\Class_ as ClassElement;
 use phpDocumentor\Reflection\Php\Method;
 use phpDocumentor\Reflection\Php\Project;
 use phpDocumentor\Reflection\Types\Context;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase as PHPUnitTestCase;
 
-/**
- * @coversDefaultClass \phpDocumentor\Reflection\Php\Factory\ContextStack
- */
+#[CoversClass(ContextStack::class)]
 final class ContextStackTest extends PHPUnitTestCase
 {
-    /**
-     * @covers ::__construct
-     * @covers ::getTypeContext
-     * @covers ::getProject
-     */
     public function testCreate(): void
     {
         $project = new Project('myProject');
@@ -32,10 +26,6 @@ final class ContextStackTest extends PHPUnitTestCase
         self::assertSame($typeContext, $context->getTypeContext());
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::peek
-     */
     public function testPeekThowsWhenEmpty(): void
     {
         $this->expectException(OutOfBoundsException::class);
@@ -46,14 +36,6 @@ final class ContextStackTest extends PHPUnitTestCase
         $context->peek();
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::peek
-     * @covers ::push
-     * @covers ::getTypeContext
-     * @covers ::getProject
-     * @covers ::createFromSelf
-     */
     public function testPeekReturnsTopOfStack(): void
     {
         $class = new ClassElement(new Fqsen('\MyClass'));
@@ -68,15 +50,6 @@ final class ContextStackTest extends PHPUnitTestCase
         self::assertSame($typeContext, $context->getTypeContext());
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::withTypeContext
-     * @covers ::peek
-     * @covers ::push
-     * @covers ::getTypeContext
-     * @covers ::getProject
-     * @covers ::createFromSelf
-     */
     public function testCreateWithTypeContext(): void
     {
         $class = new ClassElement(new Fqsen('\MyClass'));
@@ -91,10 +64,6 @@ final class ContextStackTest extends PHPUnitTestCase
         self::assertSame($typeContext, $context->getTypeContext());
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::search
-     */
     public function testSearchEmptyStackResultsInNull(): void
     {
         $project = new Project('myProject');
@@ -103,10 +72,6 @@ final class ContextStackTest extends PHPUnitTestCase
         self::assertNull($context->search(ClassElement::class));
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::search
-     */
     public function testSearchStackForExistingElementTypeWillReturnTheFirstHit(): void
     {
         $class = new ClassElement(new Fqsen('\MyClass'));

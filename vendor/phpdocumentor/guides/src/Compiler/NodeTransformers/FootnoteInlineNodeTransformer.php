@@ -2,17 +2,26 @@
 
 declare(strict_types=1);
 
+/**
+ * This file is part of phpDocumentor.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @link https://phpdoc.org
+ */
+
 namespace phpDocumentor\Guides\Compiler\NodeTransformers;
 
-use phpDocumentor\Guides\Compiler\CompilerContext;
+use phpDocumentor\Guides\Compiler\CompilerContextInterface;
 use phpDocumentor\Guides\Compiler\NodeTransformer;
 use phpDocumentor\Guides\Nodes\Inline\FootnoteInlineNode;
 use phpDocumentor\Guides\Nodes\Node;
 
 /** @implements NodeTransformer<Node> */
-class FootnoteInlineNodeTransformer implements NodeTransformer
+final class FootnoteInlineNodeTransformer implements NodeTransformer
 {
-    public function enterNode(Node $node, CompilerContext $compilerContext): Node
+    public function enterNode(Node $node, CompilerContextInterface $compilerContext): Node
     {
         if ($node instanceof FootnoteInlineNode) {
             if ($node->getNumber() > 0) {
@@ -29,7 +38,7 @@ class FootnoteInlineNodeTransformer implements NodeTransformer
         return $node;
     }
 
-    public function leaveNode(Node $node, CompilerContext $compilerContext): Node|null
+    public function leaveNode(Node $node, CompilerContextInterface $compilerContext): Node|null
     {
         return $node;
     }

@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+/**
+ * This file is part of phpDocumentor.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @link https://phpdoc.org
+ */
+
 namespace phpDocumentor\Guides\Compiler;
 
 use phpDocumentor\Guides\Compiler\NodeTransformers\NodeTransformerFactory;
@@ -46,7 +55,9 @@ final class DocumentNodeTraverser
 
         if ($supports) {
             $transformed = $transformer->enterNode($node, $compilerContext);
-            $shadowNode->getParent()?->replaceChild($node, $transformed);
+            if ($transformed !== $node) {
+                $shadowNode->getParent()?->replaceChild($node, $transformed);
+            }
         }
 
         foreach ($shadowNode->getChildren() as $shadowChild) {
@@ -59,7 +70,9 @@ final class DocumentNodeTraverser
 
         $transformed = $transformer->leaveNode($node, $compilerContext);
         if ($transformed !== null) {
-            $shadowNode->getParent()?->replaceChild($node, $transformed);
+            if ($transformed !== $node) {
+                $shadowNode->getParent()?->replaceChild($node, $transformed);
+            }
 
             return;
         }

@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace phpDocumentor\Reflection\Php;
 
 use phpDocumentor\Reflection\NodeVisitor\ElementNameResolver;
-use PhpParser\Lexer\Emulative;
 use PhpParser\Node;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeTraverserInterface;
@@ -31,23 +30,11 @@ use Webmozart\Assert\Assert;
 class NodesFactory
 {
     /**
-     * Parser used to parse the code to nodes.
-     */
-    private Parser $parser;
-
-    /**
-     * Containing a number of visitors to do some post processing steps on nodes.
-     */
-    private NodeTraverserInterface $traverser;
-
-    /**
      * @param Parser $parser used to parse the code
      * @param NodeTraverserInterface $traverser used to do some post processing on the nodes
      */
-    final public function __construct(Parser $parser, NodeTraverserInterface $traverser)
+    final public function __construct(private readonly Parser $parser, private readonly NodeTraverserInterface $traverser)
     {
-        $this->parser = $parser;
-        $this->traverser = $traverser;
     }
 
     /**
@@ -58,18 +45,9 @@ class NodesFactory
      *
      * @return static
      */
-    public static function createInstance(int $kind = ParserFactory::PREFER_PHP7): self
+    public static function createInstance(int $kind = 1): self
     {
-        $lexer = new Emulative([
-            'usedAttributes' => [
-                'comments',
-                'startLine',
-                'endLine',
-                'startFilePos',
-                'endFilePos',
-            ],
-        ]);
-        $parser = (new ParserFactory())->create($kind, $lexer);
+        $parser = (new ParserFactory())->createForNewestSupportedVersion();
         $traverser = new NodeTraverser();
         $traverser->addVisitor(new NameResolver());
         $traverser->addVisitor(new ElementNameResolver());

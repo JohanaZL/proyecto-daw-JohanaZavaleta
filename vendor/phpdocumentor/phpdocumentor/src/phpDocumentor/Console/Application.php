@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace phpDocumentor\Console;
 
-use Monolog\Handler\PsrHandler;
 use phpDocumentor\AutoloaderLocator;
 use phpDocumentor\Extension\ExtensionHandler;
 use phpDocumentor\Version;
@@ -25,28 +24,39 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputDefinition;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
-use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
+use function array_merge;
 use function getcwd;
+use function is_array;
 use function sprintf;
 
 class Application extends BaseApplication
 {
-    public function __construct()
+    /** @param string[] $composerExtensionsDirs An array of directories where composer installeed extensions are located. */
+    public function __construct(private array $composerExtensionsDirs = [])
     {
         parent::__construct('phpDocumentor', (new Version())->getVersion());
-
-        $this->setDefaultCommand('project:run');
     }
 
     public function doRun(InputInterface $input, OutputInterface $output): int
     {
-        $extensionsDirs = $input->getParameterOption(
-            '--extensions-dir',
-            $this->getDefinition()->getOption('extensions-dir')->getDefault(),
-        );
+        $extensionsDirs = [];
+        if ($input->hasParameterOption('--no-extensions') === false) {
+            $extensionsDirs = $input->getParameterOption(
+                '--extensions-dir',
+                $this->getDefinition()->getOption('extensions-dir')->getDefault(),
+            );
+
+            if (! is_array($extensionsDirs)) {
+                $extensionsDirs = [$extensionsDirs];
+            }
+
+            $extensionsDirs = array_merge($extensionsDirs, $this->composerExtensionsDirs);
+        }
+
         $extensionHandler = ExtensionHandler::getInstance($extensionsDirs);
         $containerFactory = new ContainerFactory();
         $container = $containerFactory->create(
@@ -59,6 +69,8 @@ class Application extends BaseApplication
             $this->add($container->get($id));
         }
 
+        $this->setDefaultCommand('project:run', false);
+
         $eventDispatcher = $container->get(EventDispatcher::class);
         $logger = $container->get(LoggerInterface::class);
         $this->setDispatcher($eventDispatcher);
@@ -66,7 +78,7 @@ class Application extends BaseApplication
         $eventDispatcher->addListener(
             ConsoleEvents::COMMAND,
             static function (ConsoleEvent $event) use ($logger): void {
-                $logger->pushHandler(new PsrHandler(new ConsoleLogger($event->getOutput())));
+                $logger->pushHandler(new ConsoleLogHandler(new SymfonyStyle($event->getInput(), $event->getOutput())));
             },
         );
 
@@ -101,15 +113,28 @@ class Application extends BaseApplication
                 new InputOption(
                     'extensions-dir',
                     null,
-                    InputOption::VALUE_OPTIONAL | InputOption::VALUE_IS_ARRAY,
+                    InputOption::VALUE_OPTIONAL,
                     'extensions directory to load extensions from',
-                    [
-                        getcwd() . '/.phpdoc/extensions',
-                    ],
+                    getcwd() . '/.phpdoc/extensions',
+                ),
+                new InputOption(
+                    'no-extensions',
+                    null,
+                    InputOption::VALUE_NONE,
+                    'Do not load any extensions',
                 ),
                 new InputOption('log', null, InputOption::VALUE_OPTIONAL, 'Log file to write to'),
             ],
         );
+    }
+
+    protected function getCommandName(InputInterface $input): string|null
+    {
+        if ($input->getFirstArgument() === null) {
+            return 'run';
+        }
+
+        return $input->getArgument('command');
     }
 
     /**

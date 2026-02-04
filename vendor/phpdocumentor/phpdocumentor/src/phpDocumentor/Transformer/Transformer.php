@@ -30,7 +30,6 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Webmozart\Assert\Assert;
 
 use function in_array;
-use function sprintf;
 
 /**
  * Core class responsible for transforming the cache file to a set of artifacts.
@@ -164,7 +163,7 @@ class Transformer
      * - transformer.writer.initialization.pre, before the initialization of a single writer.
      * - transformer.writer.initialization.post, after the initialization of a single writer.
      *
-     * @uses Dispatcher to emit the events surrounding an initialization.
+     * @uses EventDispatcherInterface to emit the events surrounding an initialization.
      */
     private function initializeWriter(
         WriterAbstract $writer,
@@ -220,12 +219,12 @@ class Transformer
     ): void {
         $this->logger->log(
             LogLevel::NOTICE,
-            sprintf(
-                '  Writer %s %s on %s',
-                $transformation->getWriter(),
-                ($transformation->getQuery() ? ' using query "' . $transformation->getQuery() . '"' : ''),
-                $transformation->getArtifact(),
-            ),
+            '  Writer {writer} {querty} on {artifact}',
+            [
+                'writer' => $transformation->getWriter(),
+                'query' => ($transformation->getQuery() ? ' using query "' . $transformation->getQuery() . '"' : ''),
+                'artifact' => $transformation->getArtifact(),
+            ],
         );
 
         $preTransformationEvent = PreTransformationEvent::create($this, $transformation);

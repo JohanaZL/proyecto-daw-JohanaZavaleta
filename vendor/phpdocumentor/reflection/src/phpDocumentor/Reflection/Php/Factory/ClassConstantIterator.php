@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace phpDocumentor\Reflection\Php\Factory;
 
 use Iterator;
+use Override;
 use phpDocumentor\Reflection\Fqsen;
 use PhpParser\Comment\Doc;
 use PhpParser\Node\Expr;
@@ -27,17 +28,14 @@ use PhpParser\Node\Stmt\ClassConst;
  */
 final class ClassConstantIterator implements Iterator
 {
-    private ClassConst $classConstants;
-
     /** @var int index of the current ClassConst to use */
     private int $index = 0;
 
     /**
      * Initializes the class with source data.
      */
-    public function __construct(ClassConst $classConst)
+    public function __construct(private readonly ClassConst $classConstants)
     {
-        $this->classConstants = $classConst;
     }
 
     /**
@@ -105,7 +103,7 @@ final class ClassConstantIterator implements Iterator
      *
      * The doc comment has to be the last comment associated with the node.
      */
-    public function getDocComment(): ?Doc
+    public function getDocComment(): Doc|null
     {
         $docComment = $this->classConstants->consts[$this->index]->getDocComment();
         if ($docComment === null) {
@@ -125,41 +123,36 @@ final class ClassConstantIterator implements Iterator
         return $this->classConstants->isFinal();
     }
 
-    /**
-     * @link http://php.net/manual/en/iterator.current.php
-     */
+    /** @link http://php.net/manual/en/iterator.current.php */
+    #[Override]
     public function current(): self
     {
         return $this;
     }
 
-    /**
-     * @link http://php.net/manual/en/iterator.next.php
-     */
+    /** @link http://php.net/manual/en/iterator.next.php */
+    #[Override]
     public function next(): void
     {
         ++$this->index;
     }
 
-    /**
-     * @link http://php.net/manual/en/iterator.key.php
-     */
-    public function key(): ?int
+    /** @link http://php.net/manual/en/iterator.key.php */
+    #[Override]
+    public function key(): int|null
     {
         return $this->index;
     }
 
-    /**
-     * @link http://php.net/manual/en/iterator.valid.php
-     */
+    /** @link http://php.net/manual/en/iterator.valid.php */
+    #[Override]
     public function valid(): bool
     {
         return isset($this->classConstants->consts[$this->index]);
     }
 
-    /**
-     * @link http://php.net/manual/en/iterator.rewind.php
-     */
+    /** @link http://php.net/manual/en/iterator.rewind.php */
+    #[Override]
     public function rewind(): void
     {
         $this->index = 0;

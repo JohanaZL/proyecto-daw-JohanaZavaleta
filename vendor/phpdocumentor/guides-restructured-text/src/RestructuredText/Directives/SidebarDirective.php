@@ -14,8 +14,10 @@ declare(strict_types=1);
 namespace phpDocumentor\Guides\RestructuredText\Directives;
 
 use phpDocumentor\Guides\Nodes\CollectionNode;
+use phpDocumentor\Guides\Nodes\InlineCompoundNode;
 use phpDocumentor\Guides\Nodes\Node;
 use phpDocumentor\Guides\RestructuredText\Nodes\SidebarNode;
+use phpDocumentor\Guides\RestructuredText\Parser\BlockContext;
 use phpDocumentor\Guides\RestructuredText\Parser\Directive;
 
 /**
@@ -23,7 +25,7 @@ use phpDocumentor\Guides\RestructuredText\Parser\Directive;
  *
  * https://docutils.sourceforge.io/docs/ref/rst/directives.html#sidebar
  */
-class SidebarDirective extends SubDirective
+final class SidebarDirective extends SubDirective
 {
     public function getName(): string
     {
@@ -35,11 +37,12 @@ class SidebarDirective extends SubDirective
      * @param Directive $directive
      */
     protected function processSub(
+        BlockContext $blockContext,
         CollectionNode $collectionNode,
         Directive $directive,
     ): Node|null {
         return new SidebarNode(
-            $directive->getData(),
+            $directive->getDataNode() ?? InlineCompoundNode::getPlainTextInlineNode($directive->getData()),
             $collectionNode->getChildren(),
         );
     }

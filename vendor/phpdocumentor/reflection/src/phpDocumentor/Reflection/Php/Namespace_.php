@@ -19,17 +19,14 @@ use phpDocumentor\Reflection\Metadata\MetaDataContainer as MetaDataContainerInte
 
 /**
  * Represents a namespace and its children for a project.
+ *
+ * @api
  */
 // @codingStandardsIgnoreStart
 final class Namespace_ implements Element, MetaDataContainerInterface
 // codingStandardsIgnoreEnd
 {
     use MetadataContainer;
-
-    /**
-     * @var Fqsen Full Qualified Structural Element Name
-     */
-    private Fqsen $fqsen;
 
     /**
      * @var Fqsen[] fqsen of all functions in this namespace
@@ -59,9 +56,13 @@ final class Namespace_ implements Element, MetaDataContainerInterface
     /**
      * Initializes the namespace.
      */
-    public function __construct(Fqsen $fqsen)
+    public function __construct(
+        /**
+         * @var Fqsen Full Qualified Structural Element Name
+         */
+        private readonly Fqsen $fqsen
+    )
     {
-        $this->fqsen = $fqsen;
     }
 
     /**
@@ -157,6 +158,7 @@ final class Namespace_ implements Element, MetaDataContainerInterface
     /**
      * Returns the Fqsen of the element.
      */
+    #[\Override]
     public function getFqsen(): Fqsen
     {
         return $this->fqsen;
@@ -165,6 +167,7 @@ final class Namespace_ implements Element, MetaDataContainerInterface
     /**
      * Returns the name of the element.
      */
+    #[\Override]
     public function getName(): string
     {
         return $this->fqsen->getName();

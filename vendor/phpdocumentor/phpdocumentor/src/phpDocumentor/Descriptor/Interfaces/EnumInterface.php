@@ -23,13 +23,16 @@ use phpDocumentor\Reflection\Type;
  * @see NamespaceInterface Classes may be contained in namespaces.
  * @see FileInterface      Classes may be defined in a file.
  */
-interface EnumInterface extends ElementInterface, TypeInterface
+interface EnumInterface extends ElementInterface, TypeInterface, AttributedInterface
 {
     /** @param Collection<InterfaceInterface|Fqsen> $implements */
     public function setInterfaces(Collection $implements): void;
 
     /** @return Collection<InterfaceInterface|Fqsen> */
     public function getInterfaces(): Collection;
+
+    /** @return Collection<InterfaceInterface|Fqsen> */
+    public function getInterfacesIncludingInherited(): Collection;
 
     /** @param Collection<MethodInterface> $methods */
     public function setMethods(Collection $methods): void;
@@ -65,4 +68,10 @@ interface EnumInterface extends ElementInterface, TypeInterface
      * @return Collection<TraitInterface|Fqsen>
      */
     public function getUsedTraits(): Collection;
+
+    /** @param Collection<ConstantInterface> $constants */
+    public function setConstants(Collection $constants): void;
+
+    /** @return Collection<ConstantInterface> */
+    public function getConstants(): Collection;
 }

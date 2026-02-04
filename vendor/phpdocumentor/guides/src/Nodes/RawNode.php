@@ -13,6 +13,12 @@ declare(strict_types=1);
 
 namespace phpDocumentor\Guides\Nodes;
 
-class RawNode extends TextNode
+final class RawNode extends TextNode
 {
+    public function __construct(string $contents, string $format = 'html')
+    {
+        parent::__construct($contents);
+
+        $this->options['format'] = $format;
+    }
 }

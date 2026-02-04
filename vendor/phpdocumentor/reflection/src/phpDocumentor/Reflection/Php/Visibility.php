@@ -14,14 +14,18 @@ declare(strict_types=1);
 namespace phpDocumentor\Reflection\Php;
 
 use InvalidArgumentException;
+use Override;
+use Stringable;
 
 use function sprintf;
 use function strtolower;
 
 /**
  * Value object for visibility values of classes, properties, ect.
+ *
+ * @api
  */
-final class Visibility
+class Visibility implements Stringable
 {
     /**
      * constant for protected visibility
@@ -39,7 +43,7 @@ final class Visibility
     public const PRIVATE_ = 'private';
 
     /** @var string value can be public, protected or private */
-    private string $visibility;
+    private readonly string $visibility;
 
     /**
      * Initializes the object.
@@ -52,7 +56,7 @@ final class Visibility
 
         if ($visibility !== self::PUBLIC_ && $visibility !== self::PROTECTED_ && $visibility !== self::PRIVATE_) {
             throw new InvalidArgumentException(
-                sprintf('""%s" is not a valid visibility value.', $visibility)
+                sprintf('""%s" is not a valid visibility value.', $visibility),
             );
         }
 
@@ -62,6 +66,7 @@ final class Visibility
     /**
      * Will return a string representation of visibility.
      */
+    #[Override]
     public function __toString(): string
     {
         return $this->visibility;

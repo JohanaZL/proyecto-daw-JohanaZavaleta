@@ -14,12 +14,11 @@ declare(strict_types=1);
 namespace phpDocumentor\Reflection\Php;
 
 use OutOfBoundsException;
+use Override;
 use phpDocumentor\Reflection\Php\Factory\ContextStack;
 use SplPriorityQueue;
 
-use function get_class;
-use function is_object;
-use function print_r;
+use function get_debug_type;
 use function sprintf;
 
 final class ProjectFactoryStrategies implements StrategyContainer
@@ -27,7 +26,7 @@ final class ProjectFactoryStrategies implements StrategyContainer
     public const DEFAULT_PRIORITY = 1000;
 
     /** @var SplPriorityQueue<int, ProjectFactoryStrategy> */
-    private SplPriorityQueue $strategies;
+    private readonly SplPriorityQueue $strategies;
 
     /**
      * Initializes the factory with a number of strategies.
@@ -45,11 +44,10 @@ final class ProjectFactoryStrategies implements StrategyContainer
     /**
      * Find the ProjectFactoryStrategy that matches $object.
      *
-     * @param mixed $object
-     *
      * @throws OutOfBoundsException When no matching strategy was found.
      */
-    public function findMatching(ContextStack $context, $object): ProjectFactoryStrategy
+    #[Override]
+    public function findMatching(ContextStack $context, mixed $object): ProjectFactoryStrategy
     {
         foreach (clone $this->strategies as $strategy) {
             if ($strategy->matches($context, $object)) {
@@ -60,8 +58,8 @@ final class ProjectFactoryStrategies implements StrategyContainer
         throw new OutOfBoundsException(
             sprintf(
                 'No matching factory found for %s',
-                is_object($object) ? get_class($object) : print_r($object, true)
-            )
+                get_debug_type($object),
+            ),
         );
     }
 

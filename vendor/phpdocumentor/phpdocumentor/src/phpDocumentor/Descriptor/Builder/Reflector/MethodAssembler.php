@@ -13,13 +13,11 @@ declare(strict_types=1);
 
 namespace phpDocumentor\Descriptor\Builder\Reflector;
 
-use phpDocumentor\Descriptor\ArgumentDescriptor;
+use phpDocumentor\Descriptor\Builder\AssemblerReducer;
 use phpDocumentor\Descriptor\Collection;
-use phpDocumentor\Descriptor\DocBlock\DescriptionDescriptor;
 use phpDocumentor\Descriptor\Interfaces\MethodInterface;
 use phpDocumentor\Descriptor\MethodDescriptor;
 use phpDocumentor\Descriptor\Tag\ParamDescriptor;
-use phpDocumentor\Descriptor\ValueObjects\IsApplicable;
 use phpDocumentor\Reflection\DocBlock\Tags\InvalidTag;
 use phpDocumentor\Reflection\DocBlock\Tags\Param;
 use phpDocumentor\Reflection\Php\Argument;
@@ -40,9 +38,9 @@ class MethodAssembler extends AssemblerAbstract
     /**
      * Initializes this assembler with its dependencies.
      */
-    public function __construct(private readonly ArgumentAssembler $argumentAssembler)
+    public function __construct(private readonly ArgumentAssembler $argumentAssembler, AssemblerReducer ...$reducers)
     {
-        parent::__construct();
+        parent::__construct(...$reducers);
     }
 
     /**
@@ -50,7 +48,7 @@ class MethodAssembler extends AssemblerAbstract
      *
      * @param Method $data
      */
-    public function create(object $data): MethodInterface
+    public function buildDescriptor(object $data): MethodInterface
     {
         $methodDescriptor = new MethodDescriptor();
         $methodDescriptor->setNamespace(
@@ -64,7 +62,7 @@ class MethodAssembler extends AssemblerAbstract
 
         $this->assembleDocBlock($data->getDocBlock(), $methodDescriptor);
         $this->addArguments($data, $methodDescriptor);
-        $this->addVariadicArgument($data, $methodDescriptor);
+        $this->addVirualVariadicArgument($data, $methodDescriptor);
 
         return $methodDescriptor;
     }
@@ -76,7 +74,6 @@ class MethodAssembler extends AssemblerAbstract
     {
         $descriptor->setFullyQualifiedStructuralElementName($reflector->getFqsen());
         $descriptor->setName($reflector->getName());
-        $descriptor->setVisibility((string) $reflector->getVisibility() ?: 'public');
         $descriptor->setFinal($reflector->isFinal());
         $descriptor->setAbstract($reflector->isAbstract());
         $descriptor->setStatic($reflector->isStatic());
@@ -116,10 +113,12 @@ class MethodAssembler extends AssemblerAbstract
     }
 
     /**
+     * Add a virtual argument to the method descriptor if the last `@param` tag is variadic.
+     *
      * Checks if there is a variadic argument in the `@param` tags and adds it to the list of Arguments in
      * the Descriptor unless there is already one present.
      */
-    protected function addVariadicArgument(Method $data, MethodDescriptor $methodDescriptor): void
+    protected function addVirualVariadicArgument(Method $data, MethodDescriptor $methodDescriptor): void
     {
         if (! $data->getDocBlock()) {
             return;
@@ -135,21 +134,26 @@ class MethodAssembler extends AssemblerAbstract
 
         if (
             ! $lastParamTag->isVariadic()
-            || ! array_key_exists($lastParamTag->getVariableName(), $methodDescriptor->getArguments()->getAll())
+            || array_key_exists($lastParamTag->getVariableName(), $methodDescriptor->getArguments()->getAll())
         ) {
             return;
         }
 
         $types = $lastParamTag->getType();
 
-        $argument = new ArgumentDescriptor();
-        $argument->setName($lastParamTag->getVariableName());
-        $argument->setType($types);
-        $argument->setDescription(new DescriptionDescriptor($lastParamTag->getDescription(), []));
-        $argument->setStartLocation($methodDescriptor->getStartLocation());
-        $argument->setEndLocation($methodDescriptor->getEndLocation());
-        $argument->setVariadic(IsApplicable::true());
+        $argument = new Argument(
+            $lastParamTag->getVariableName(),
+            $types,
+            null,
+            $lastParamTag->isReference(),
+            $lastParamTag->isVariadic(),
+        );
 
-        $methodDescriptor->getArguments()->set($argument->getName(), $argument);
+        $argumentDescriptor = $this->argumentAssembler->create(
+            $argument,
+            $methodDescriptor->getTags()->fetch('param', new Collection())->filter(ParamDescriptor::class),
+        );
+
+        $methodDescriptor->getArguments()->set($argumentDescriptor->getName(), $argumentDescriptor);
     }
 }

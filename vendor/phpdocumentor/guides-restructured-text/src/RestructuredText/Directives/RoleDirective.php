@@ -29,7 +29,7 @@ use function trim;
  *
  * https://docutils.sourceforge.io/docs/ref/rst/directives.html#role
  */
-class RoleDirective extends ActionDirective
+final class RoleDirective extends ActionDirective
 {
     public function __construct(
         private readonly LoggerInterface $logger,
@@ -47,7 +47,7 @@ class RoleDirective extends ActionDirective
     ): void {
         $name = $directive->getData();
         $role = 'span';
-        if (preg_match('/^([A-Za-z-]*)\(([A-Za-z-]*)\)$/', trim($name), $match) > 0) {
+        if (preg_match('/^([A-Za-z-]*)\(([A-Za-z-]*)\)$/', trim($name), $match) === 1) {
             $name = $match[1];
             $role = $match[2];
         }

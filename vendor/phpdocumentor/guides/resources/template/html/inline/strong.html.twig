@@ -1,2 +1,5 @@
-{% apply spaceless %}<strong>{{- node.value -}}</strong>
-{% endapply %}
+<strong>
+{%- for child in node.children -%}
+    {{- renderNode(child) -}}
+{%- endfor -%}
+</strong>

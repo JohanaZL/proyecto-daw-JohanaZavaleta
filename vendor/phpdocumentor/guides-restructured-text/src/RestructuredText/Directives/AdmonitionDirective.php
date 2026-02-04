@@ -13,9 +13,10 @@ declare(strict_types=1);
 
 namespace phpDocumentor\Guides\RestructuredText\Directives;
 
+use phpDocumentor\Guides\Nodes\AdmonitionNode;
 use phpDocumentor\Guides\Nodes\CollectionNode;
 use phpDocumentor\Guides\Nodes\Node;
-use phpDocumentor\Guides\RestructuredText\Nodes\AdmonitionNode;
+use phpDocumentor\Guides\RestructuredText\Parser\BlockContext;
 use phpDocumentor\Guides\RestructuredText\Parser\Directive;
 
 use function preg_replace;
@@ -33,7 +34,7 @@ use function trim;
  *
  * @see https://docutils.sourceforge.io/docs/ref/rst/directives.html#generic-admonition
  */
-class AdmonitionDirective extends SubDirective
+final class AdmonitionDirective extends SubDirective
 {
     public function getName(): string
     {
@@ -45,6 +46,7 @@ class AdmonitionDirective extends SubDirective
      * @param Directive $directive
      */
     protected function processSub(
+        BlockContext $blockContext,
         CollectionNode $collectionNode,
         Directive $directive,
     ): Node|null {

@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+/**
+ * This file is part of phpDocumentor.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @link https://phpdoc.org
+ */
+
 namespace phpDocumentor\Guides\RestructuredText\TextRoles;
 
 use phpDocumentor\Guides\Nodes\Inline\AbbreviationInlineNode;
@@ -12,9 +21,24 @@ use Psr\Log\LoggerInterface;
 use function preg_match;
 use function trim;
 
-class AbbreviationTextRole extends BaseTextRole
+/**
+ * Role to create an abbreviation.
+ *
+ * Example:
+ *
+ * ```rest
+ * :abbreviation:`term (some term definition)`
+ * ```
+ */
+final class AbbreviationTextRole extends BaseTextRole
 {
     protected string $name = 'abbreviation';
+
+    /** @return string[] */
+    public function getAliases(): array
+    {
+        return ['abbr'];
+    }
 
     public function __construct(
         private readonly LoggerInterface $logger,
@@ -28,7 +52,7 @@ class AbbreviationTextRole extends BaseTextRole
         string $content,
         string $rawContent,
     ): InlineNode {
-        if (preg_match('/([^\(]+)\(([^\)]+)\)$/', $content, $matches) !== 0) {
+        if (preg_match('/([^\(]+)\(([^\)]+)\)$/', $content, $matches) === 1) {
             return new AbbreviationInlineNode(trim($matches[1]), trim($matches[2]));
         }
 

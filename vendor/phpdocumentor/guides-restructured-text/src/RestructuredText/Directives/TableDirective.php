@@ -2,11 +2,21 @@
 
 declare(strict_types=1);
 
+/**
+ * This file is part of phpDocumentor.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @link https://phpdoc.org
+ */
+
 namespace phpDocumentor\Guides\RestructuredText\Directives;
 
 use phpDocumentor\Guides\Nodes\CollectionNode;
 use phpDocumentor\Guides\Nodes\Node;
 use phpDocumentor\Guides\Nodes\TableNode;
+use phpDocumentor\Guides\RestructuredText\Parser\BlockContext;
 use phpDocumentor\Guides\RestructuredText\Parser\Directive;
 use phpDocumentor\Guides\RestructuredText\Parser\Productions\Rule;
 use Psr\Log\LoggerInterface;
@@ -49,18 +59,25 @@ final class TableDirective extends SubDirective
 
     /** {@inheritDoc} */
     protected function processSub(
+        BlockContext $blockContext,
         CollectionNode $collectionNode,
         Directive $directive,
     ): Node|null {
         if (count($collectionNode->getChildren()) !== 1) {
-            $this->logger->warning(sprintf('The table directive may contain exactly one table. %s children found', count($collectionNode->getChildren())));
+            $this->logger->warning(
+                sprintf('The table directive may contain exactly one table. %s children found', count($collectionNode->getChildren())),
+                $blockContext->getLoggerInformation(),
+            );
 
             return $collectionNode;
         }
 
         $tableNode = $collectionNode->getChildren()[0];
         if (!$tableNode instanceof TableNode) {
-            $this->logger->warning(sprintf('The table directive may contain exactly one table. A node of type %s was found. ', $tableNode::class));
+            $this->logger->warning(
+                sprintf('The table directive may contain exactly one table. A node of type %s was found. ', $tableNode::class),
+                $blockContext->getLoggerInformation(),
+            );
 
             return $collectionNode;
         }

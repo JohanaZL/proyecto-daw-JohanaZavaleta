@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+/**
+ * This file is part of phpDocumentor.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @link https://phpdoc.org
+ */
+
 namespace phpDocumentor\Guides\RestructuredText;
 
 use InvalidArgumentException;
@@ -10,8 +19,8 @@ use phpDocumentor\Guides\Nodes\DocumentNode;
 use phpDocumentor\Guides\ParserContext;
 use phpDocumentor\Guides\RestructuredText\Parser\BlockContext;
 use phpDocumentor\Guides\RestructuredText\Parser\DocumentParserContext;
+use phpDocumentor\Guides\RestructuredText\Parser\DocumentParserContextFactory;
 use phpDocumentor\Guides\RestructuredText\Parser\Productions\Rule;
-use phpDocumentor\Guides\RestructuredText\TextRoles\TextRoleFactory;
 use RuntimeException;
 use Webmozart\Assert\Assert;
 
@@ -28,7 +37,7 @@ class MarkupLanguageParser implements ParserInterface
     /** @param Rule<DocumentNode> $startingRule */
     public function __construct(
         private readonly Rule $startingRule,
-        private readonly TextRoleFactory $textRoleFactory,
+        private readonly DocumentParserContextFactory $documentParserContextFactory,
     ) {
     }
 
@@ -42,7 +51,7 @@ class MarkupLanguageParser implements ParserInterface
     {
         return new MarkupLanguageParser(
             $this->startingRule,
-            $this->textRoleFactory,
+            $this->documentParserContextFactory,
         );
     }
 
@@ -75,11 +84,7 @@ class MarkupLanguageParser implements ParserInterface
     {
         $this->parserContext = $parserContext;
 
-        $this->documentParser = new DocumentParserContext(
-            $parserContext,
-            $this->textRoleFactory,
-            $this,
-        );
+        $this->documentParser = $this->documentParserContextFactory->create($this);
 
         $blockContext = new BlockContext($this->documentParser, $contents);
         if ($this->startingRule->applies($blockContext)) {

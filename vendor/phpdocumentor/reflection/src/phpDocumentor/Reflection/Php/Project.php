@@ -13,18 +13,17 @@ declare(strict_types=1);
 
 namespace phpDocumentor\Reflection\Php;
 
+use Override;
 use phpDocumentor\Reflection\Fqsen;
 use phpDocumentor\Reflection\Project as ProjectInterface;
 
 /**
  * Represents the entire project with its files, namespaces and indexes.
+ *
+ * @api
  */
 final class Project implements ProjectInterface
 {
-    private string $name = '';
-
-    private ?Namespace_ $rootNamespace;
-
     /** @var File[] */
     private array $files = [];
 
@@ -35,12 +34,10 @@ final class Project implements ProjectInterface
      * Initializes this descriptor.
      *
      * @param string          $name      Name of the current project.
-     * @param Namespace_|null $namespace Root namespace of the project.
+     * @param Namespace_|null $rootNamespace Root namespace of the project.
      */
-    public function __construct(string $name, ?Namespace_ $namespace = null)
+    public function __construct(private readonly string $name, private Namespace_|null $rootNamespace = null)
     {
-        $this->name          = $name;
-        $this->rootNamespace = $namespace;
         if ($this->rootNamespace !== null) {
             return;
         }
@@ -51,6 +48,7 @@ final class Project implements ProjectInterface
     /**
      * Returns the name of this project.
      */
+    #[Override]
     public function getName(): string
     {
         return $this->name;
@@ -95,7 +93,7 @@ final class Project implements ProjectInterface
     /**
      * Returns the root (global) namespace.
      */
-    public function getRootNamespace(): ?Namespace_
+    public function getRootNamespace(): Namespace_|null
     {
         return $this->rootNamespace;
     }

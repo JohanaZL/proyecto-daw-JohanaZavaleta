@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+/**
+ * This file is part of phpDocumentor.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @link https://phpdoc.org
+ */
+
 namespace phpDocumentor\Guides\RestructuredText\Directives;
 
 use League\Csv\Reader;
@@ -18,9 +27,12 @@ use Psr\Log\LoggerInterface;
 
 use function array_filter;
 use function array_map;
+use function array_merge;
+use function assert;
 use function count;
 use function explode;
 use function implode;
+use function is_string;
 use function strval;
 use function trim;
 
@@ -58,15 +70,18 @@ final class CsvTableDirective extends BaseDirective
                 ->readStream((string) $directive->getOption('file')->getValue());
 
             if ($csvStream === false) {
-                $this->logger->error('Unable to read CSV file {file}', ['file' => $directive->getOption('file')->getValue()]);
+                $this->logger->error(
+                    'Unable to read CSV file {file}',
+                    array_merge(['file' => $directive->getOption('file')->getValue()], $blockContext->getLoggerInformation()),
+                );
 
                 return new GenericNode('csv-table');
             }
 
-            $csv = Reader::createFromStream($csvStream);
+            $csv = Reader::from($csvStream);
         } else {
             $lines = $blockContext->getDocumentIterator()->toArray();
-            $csv = Reader::createFromString(implode("\n", $lines));
+            $csv = Reader::fromString(implode("\n", $lines));
         }
 
         if ($directive->getOption('header-rows')->getValue() !== null) {
@@ -75,7 +90,8 @@ final class CsvTableDirective extends BaseDirective
 
         $header = null;
         if ($directive->hasOption('header')) {
-            $headerCsv = Reader::createFromString($directive->getOption('header')->toString());
+            $headerCsv = Reader::fromString($directive->getOption('header')->toString());
+
             $header = new TableRow();
             foreach ($headerCsv->first() as $column) {
                 $columnNode = new TableColumn($column, 1, []);
@@ -93,6 +109,7 @@ final class CsvTableDirective extends BaseDirective
         foreach ($csv->getRecords() as $record) {
             $tableRow = new TableRow();
             foreach ($record as $column) {
+                assert(is_string($column) || $column === null);
                 $columnNode = new TableColumn($column ?? '', 1, []);
                 $tableRow->addColumn($this->buildColumn($columnNode, $blockContext, $this->productions));
             }

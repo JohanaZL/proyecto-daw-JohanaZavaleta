@@ -2,11 +2,20 @@
 
 declare(strict_types=1);
 
+/**
+ * This file is part of phpDocumentor.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @link https://phpdoc.org
+ */
+
 namespace phpDocumentor\Guides\Compiler\NodeTransformers;
 
 use ArrayIterator;
 use LogicException;
-use phpDocumentor\Guides\Compiler\CompilerContext;
+use phpDocumentor\Guides\Compiler\CompilerContextInterface;
 use phpDocumentor\Guides\Compiler\NodeTransformer;
 use phpDocumentor\Guides\Compiler\ShadowTree\TreeNode;
 use phpDocumentor\Guides\Nodes\AnchorNode;
@@ -25,12 +34,12 @@ final class MoveAnchorTransformer implements NodeTransformer
         $this->seen = new WeakMap();
     }
 
-    public function enterNode(Node $node, CompilerContext $compilerContext): Node
+    public function enterNode(Node $node, CompilerContextInterface $compilerContext): Node
     {
         return $node;
     }
 
-    public function leaveNode(Node $node, CompilerContext $compilerContext): Node|null
+    public function leaveNode(Node $node, CompilerContextInterface $compilerContext): Node|null
     {
         //When exists in seen, it means that the node has already been processed. Ignore it.
         if (isset($this->seen[$node])) {

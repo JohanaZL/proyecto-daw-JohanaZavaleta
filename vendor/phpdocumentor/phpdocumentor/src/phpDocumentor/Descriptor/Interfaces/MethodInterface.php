@@ -16,11 +16,18 @@ namespace phpDocumentor\Descriptor\Interfaces;
 use phpDocumentor\Descriptor\Collection;
 use phpDocumentor\Descriptor\Tag\ParamDescriptor;
 use phpDocumentor\Descriptor\Tag\ReturnDescriptor;
+use phpDocumentor\Descriptor\ValueObjects\Visibility;
 
 /**
  * Describes the public interface of the description for a method.
  */
-interface MethodInterface extends ElementInterface, TypeInterface, InheritsFromElement, ChildInterface
+interface MethodInterface extends
+    ElementInterface,
+    TypeInterface,
+    InheritsFromElement,
+    ChildInterface,
+    AttributedInterface,
+    VisibilityInterface
 {
     public function setAbstract(bool $abstract): void;
 
@@ -37,7 +44,7 @@ interface MethodInterface extends ElementInterface, TypeInterface, InheritsFromE
 
     public function isStatic(): bool;
 
-    public function setVisibility(string $visibility): void;
+    public function setVisibility(Visibility $visibility): void;
 
     /** @return Collection<ParamDescriptor> */
     public function getParam(): Collection;

@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+/**
+ * This file is part of phpDocumentor.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @link https://phpdoc.org
+ */
+
 namespace phpDocumentor\Guides\RestructuredText\Parser\Productions\InlineRules;
 
 use phpDocumentor\Guides\Nodes\Inline\CitationInlineNode;
@@ -14,7 +23,7 @@ use phpDocumentor\Guides\RestructuredText\Parser\InlineLexer;
 /**
  * Rule to parse for text roles such as ``:ref:`something` `
  */
-class AnnotationRoleRule extends AbstractInlineRule
+final class AnnotationRoleRule extends AbstractInlineRule
 {
     public function applies(InlineLexer $lexer): bool
     {

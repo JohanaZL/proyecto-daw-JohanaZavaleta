@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace phpDocumentor\Reflection\Php\Factory;
 
+use Override;
 use phpDocumentor\Reflection\Fqsen;
 use phpDocumentor\Reflection\Location;
 use phpDocumentor\Reflection\Php\File as FileElement;
@@ -23,13 +24,15 @@ use function assert;
 
 final class Enum_ extends AbstractFactory
 {
+    #[Override]
     public function matches(ContextStack $context, object $object): bool
     {
         return $object instanceof EnumNode;
     }
 
     /** @param EnumNode $object */
-    protected function doCreate(ContextStack $context, object $object, StrategyContainer $strategies): void
+    #[Override]
+    protected function doCreate(ContextStack $context, object $object, StrategyContainer $strategies): object|null
     {
         $docBlock = $this->createDocBlock($object->getDocComment(), $context->getTypeContext());
 
@@ -38,12 +41,12 @@ final class Enum_ extends AbstractFactory
             (new Type())->fromPhpParser($object->scalarType),
             $docBlock,
             new Location($object->getLine()),
-            new Location($object->getEndLine())
+            new Location($object->getEndLine()),
         );
 
         foreach ($object->implements as $interfaceClassName) {
             $enum->addInterface(
-                new Fqsen('\\' . $interfaceClassName->toString())
+                new Fqsen('\\' . $interfaceClassName->toString()),
             );
         }
 
@@ -56,5 +59,7 @@ final class Enum_ extends AbstractFactory
             $strategy = $strategies->findMatching($thisContext, $stmt);
             $strategy->create($thisContext, $stmt, $strategies);
         }
+
+        return $enum;
     }
 }

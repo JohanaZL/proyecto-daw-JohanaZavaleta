@@ -13,11 +13,11 @@ declare(strict_types=1);
 
 namespace phpDocumentor\Reflection\Php\Factory;
 
+use Override;
 use phpDocumentor\Reflection\Fqsen;
 use phpDocumentor\Reflection\Location;
 use phpDocumentor\Reflection\Php\Class_ as ClassElement;
 use phpDocumentor\Reflection\Php\File as FileElement;
-use phpDocumentor\Reflection\Php\ProjectFactoryStrategy;
 use phpDocumentor\Reflection\Php\StrategyContainer;
 use PhpParser\Node\Stmt\Class_ as ClassNode;
 
@@ -26,8 +26,9 @@ use function assert;
 /**
  * Strategy to create a ClassElement including all sub elements.
  */
-final class Class_ extends AbstractFactory implements ProjectFactoryStrategy
+final class Class_ extends AbstractFactory
 {
+    #[Override]
     public function matches(ContextStack $context, object $object): bool
     {
         return $object instanceof ClassNode;
@@ -42,24 +43,25 @@ final class Class_ extends AbstractFactory implements ProjectFactoryStrategy
      * @param ContextStack $context of the created object
      * @param ClassNode $object
      */
-    protected function doCreate(ContextStack $context, object $object, StrategyContainer $strategies): void
+    #[Override]
+    protected function doCreate(ContextStack $context, object $object, StrategyContainer $strategies): object|null
     {
         $docBlock = $this->createDocBlock($object->getDocComment(), $context->getTypeContext());
 
         $classElement = new ClassElement(
             $object->getAttribute('fqsen'),
             $docBlock,
-            $object->extends ? new Fqsen('\\' . $object->extends) : null,
+            isset($object->extends) ? new Fqsen('\\' . $object->extends) : null,
             $object->isAbstract(),
             $object->isFinal(),
             new Location($object->getLine()),
             new Location($object->getEndLine()),
-            $object->isReadonly()
+            $object->isReadonly(),
         );
 
         foreach ($object->implements as $interfaceClassName) {
             $classElement->addInterface(
-                new Fqsen('\\' . $interfaceClassName->toString())
+                new Fqsen('\\' . $interfaceClassName->toString()),
             );
         }
 
@@ -72,5 +74,7 @@ final class Class_ extends AbstractFactory implements ProjectFactoryStrategy
             $strategy = $strategies->findMatching($thisContext, $stmt);
             $strategy->create($thisContext, $stmt, $strategies);
         }
+
+        return $classElement;
     }
 }

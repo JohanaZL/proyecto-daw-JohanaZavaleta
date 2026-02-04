@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace phpDocumentor\Reflection\Php\Factory;
 
 use InvalidArgumentException;
+use Override;
 use phpDocumentor\Reflection\Fqsen;
 use phpDocumentor\Reflection\Php\File as FileElement;
 use phpDocumentor\Reflection\Php\ProjectFactoryStrategy;
@@ -13,21 +14,19 @@ use phpDocumentor\Reflection\Types\NamespaceNodeToContext;
 use PhpParser\Node\Stmt\Namespace_ as NamespaceNode;
 use Webmozart\Assert\Assert;
 
-use function get_class;
-use function gettype;
-use function is_object;
+use function get_debug_type;
 use function sprintf;
 
 class Namespace_ implements ProjectFactoryStrategy
 {
+    #[Override]
     public function matches(ContextStack $context, object $object): bool
     {
         return $object instanceof NamespaceNode;
     }
 
-    /**
-     * @param NamespaceNode $object
-     */
+    /** @param NamespaceNode $object */
+    #[Override]
     public function create(ContextStack $context, object $object, StrategyContainer $strategies): void
     {
         if (!$this->matches($context, $object)) {
@@ -35,8 +34,8 @@ class Namespace_ implements ProjectFactoryStrategy
                 sprintf(
                     '%s cannot handle objects with the type %s',
                     self::class,
-                    is_object($object) ? get_class($object) : gettype($object)
-                )
+                    get_debug_type($object),
+                ),
             );
         }
 

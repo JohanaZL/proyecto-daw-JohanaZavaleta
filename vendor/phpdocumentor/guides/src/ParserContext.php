@@ -2,34 +2,35 @@
 
 declare(strict_types=1);
 
+/**
+ * This file is part of phpDocumentor.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @link https://phpdoc.org
+ */
+
 namespace phpDocumentor\Guides;
 
 use League\Flysystem\FilesystemInterface;
-use League\Uri\Uri;
-use League\Uri\UriInfo;
+use League\Uri\BaseUri;
+use phpDocumentor\FileSystem\FileSystem;
 use phpDocumentor\Guides\Nodes\ProjectNode;
+use phpDocumentor\Guides\ReferenceResolvers\DocumentNameResolverInterface;
 
-use function array_shift;
 use function dirname;
 use function ltrim;
-use function strtolower;
-use function trim;
 
 class ParserContext
 {
-    /** @var array<string, string> */
-    private array $links = [];
-
-    /** @var string[] */
-    private array $anonymous = [];
-
     public function __construct(
         private readonly ProjectNode $projectNode,
         private readonly string $currentFileName,
         private readonly string $currentDirectory,
         private readonly int $initialHeaderLevel,
-        private readonly FilesystemInterface $origin,
-        private readonly UrlGeneratorInterface $urlGenerator,
+        private readonly FilesystemInterface|FileSystem $origin,
+        private readonly DocumentNameResolverInterface $documentNameResolver,
     ) {
     }
 
@@ -43,37 +44,9 @@ class ParserContext
         return $this->initialHeaderLevel;
     }
 
-    public function setLink(string $name, string $url): void
-    {
-        $name = strtolower(trim($name));
-
-        if ($name === '_') {
-            $name = array_shift($this->anonymous);
-        }
-
-        $this->links[$name] = trim($url);
-    }
-
-    public function resetAnonymousStack(): void
-    {
-        $this->anonymous = [];
-    }
-
-    public function pushAnonymous(string $name): void
-    {
-        $this->anonymous[] = strtolower(trim($name));
-    }
-
-    /** @return array<string, string> */
-    public function getLinks(): array
-    {
-        return $this->links;
-    }
-
     public function absoluteRelativePath(string $url): string
     {
-        $uri = Uri::createFromString($url);
-        if (UriInfo::isAbsolutePath($uri)) {
+        if (BaseUri::from($url)->isAbsolutePath()) {
             return $this->currentDirectory . '/' . ltrim($url, '/');
         }
 
@@ -104,7 +77,7 @@ class ParserContext
         ];
     }
 
-    public function getOrigin(): FilesystemInterface
+    public function getOrigin(): FilesystemInterface|FileSystem
     {
         return $this->origin;
     }
@@ -130,6 +103,6 @@ class ParserContext
      */
     public function getCurrentAbsolutePath(): string
     {
-        return $this->urlGenerator->absoluteUrl($this->currentDirectory, $this->currentFileName);
+        return $this->documentNameResolver->absoluteUrl($this->currentDirectory, $this->currentFileName);
     }
 }

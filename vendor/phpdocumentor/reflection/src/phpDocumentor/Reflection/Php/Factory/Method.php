@@ -13,12 +13,12 @@ declare(strict_types=1);
 
 namespace phpDocumentor\Reflection\Php\Factory;
 
+use Override;
 use phpDocumentor\Reflection\Location;
 use phpDocumentor\Reflection\Php\Class_;
 use phpDocumentor\Reflection\Php\Enum_;
 use phpDocumentor\Reflection\Php\Interface_;
 use phpDocumentor\Reflection\Php\Method as MethodDescriptor;
-use phpDocumentor\Reflection\Php\ProjectFactoryStrategy;
 use phpDocumentor\Reflection\Php\StrategyContainer;
 use phpDocumentor\Reflection\Php\Trait_;
 use phpDocumentor\Reflection\Php\Visibility;
@@ -30,8 +30,9 @@ use function is_array;
 /**
  * Strategy to create MethodDescriptor and arguments when applicable.
  */
-final class Method extends AbstractFactory implements ProjectFactoryStrategy
+final class Method extends AbstractFactory
 {
+    #[Override]
     public function matches(ContextStack $context, object $object): bool
     {
         return $object instanceof ClassMethod;
@@ -43,11 +44,12 @@ final class Method extends AbstractFactory implements ProjectFactoryStrategy
      * @param ClassMethod $object object to convert to an MethodDescriptor
      * @param ContextStack $context of the created object
      */
+    #[Override]
     protected function doCreate(
         ContextStack $context,
         object $object,
-        StrategyContainer $strategies
-    ): void {
+        StrategyContainer $strategies,
+    ): object|null {
         $methodContainer = $context->peek();
         Assert::isInstanceOfAny(
             $methodContainer,
@@ -56,7 +58,7 @@ final class Method extends AbstractFactory implements ProjectFactoryStrategy
                 Interface_::class,
                 Trait_::class,
                 Enum_::class,
-            ]
+            ],
         );
 
         $method = new MethodDescriptor(
@@ -69,24 +71,21 @@ final class Method extends AbstractFactory implements ProjectFactoryStrategy
             new Location($object->getLine(), $object->getStartFilePos()),
             new Location($object->getEndLine(), $object->getEndFilePos()),
             (new Type())->fromPhpParser($object->getReturnType()),
-            $object->byRef ?: false
+            $object->byRef ?: false,
         );
         $methodContainer->addMethod($method);
 
-        $thisContext = $context->push($method);
-        foreach ($object->params as $param) {
-            $strategy = $strategies->findMatching($thisContext, $param);
-            $strategy->create($thisContext, $param, $strategies);
-        }
-
         if (!is_array($object->stmts)) {
-            return;
+            return $method;
         }
 
+        $thisContext = $context->push($method);
         foreach ($object->stmts as $stmt) {
             $strategy = $strategies->findMatching($thisContext, $stmt);
             $strategy->create($thisContext, $stmt, $strategies);
         }
+
+        return $method;
     }
 
     /**

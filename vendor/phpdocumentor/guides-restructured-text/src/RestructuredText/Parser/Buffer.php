@@ -2,10 +2,18 @@
 
 declare(strict_types=1);
 
+/**
+ * This file is part of phpDocumentor.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @link https://phpdoc.org
+ */
+
 namespace phpDocumentor\Guides\RestructuredText\Parser;
 
 use function array_pop;
-use function array_walk;
 use function count;
 use function implode;
 use function ltrim;
@@ -17,7 +25,7 @@ use function trim;
 
 use const PHP_INT_MAX;
 
-class Buffer
+final class Buffer
 {
     /** @param string[] $lines */
     public function __construct(
@@ -94,21 +102,29 @@ class Buffer
 
     public function trimLines(): void
     {
-        array_walk($this->lines, static function (&$value): void {
-            $value = trim($value);
-        });
+        foreach ($this->lines as $i => $line) {
+            $this->lines[$i] = trim($line);
+        }
     }
 
     private function unIndent(): void
     {
+        if ($this->unindentStrategy === UnindentStrategy::NONE) {
+            return;
+        }
+
         $indentation = $this->detectIndentation();
-        array_walk($this->lines, static function (&$value) use ($indentation): void {
-            if (strlen($value) < $indentation) {
-                return;
+        if ($indentation === 0) {
+            return;
+        }
+
+        foreach ($this->lines as $i => $line) {
+            if (strlen($line) < $indentation) {
+                continue;
             }
 
-            $value = substr($value, $indentation);
-        });
+            $this->lines[$i] = substr($line, $indentation);
+        }
     }
 
     private function detectIndentation(): int

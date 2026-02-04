@@ -2,11 +2,21 @@
 
 declare(strict_types=1);
 
+/**
+ * This file is part of phpDocumentor.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @link https://phpdoc.org
+ */
+
 namespace phpDocumentor\Guides\RestructuredText\TextRoles;
 
 use function in_array;
+use function strtolower;
 
-class DefaultTextRoleFactory implements TextRoleFactory
+final class DefaultTextRoleFactory implements TextRoleFactory
 {
     /** @var TextRole[] */
     private array $textRoles;
@@ -44,16 +54,17 @@ class DefaultTextRoleFactory implements TextRoleFactory
 
     public function getTextRole(string $name, string|null $domain = null): TextRole
     {
-        if ($name === 'default') {
+        $normalizedName = strtolower($name);
+        if ($normalizedName === 'default') {
             return $this->defaultTextRole;
         }
 
         if ($domain === null) {
-            return $this->findTextRole($this->textRoles, $name);
+            return $this->findTextRole($this->textRoles, $normalizedName);
         }
 
         if (isset($this->domains[$domain])) {
-            return $this->findTextRole($this->domains[$domain], $name);
+            return $this->findTextRole($this->domains[$domain], $normalizedName);
         }
 
         return $this->genericTextRole;

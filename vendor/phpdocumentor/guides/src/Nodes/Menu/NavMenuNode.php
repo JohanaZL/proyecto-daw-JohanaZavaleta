@@ -13,11 +13,14 @@ declare(strict_types=1);
 
 namespace phpDocumentor\Guides\Nodes\Menu;
 
-use function assert;
 use function is_scalar;
 
-class NavMenuNode extends MenuNode
+final class NavMenuNode extends MenuNode
 {
+    private string|null $currentPath = null;
+    /** @var string[] */
+    private array $rootlinePaths = [];
+
     public function getDepth(): int
     {
         if ($this->hasOption('depth') && is_scalar($this->getOption('depth'))) {
@@ -36,21 +39,31 @@ class NavMenuNode extends MenuNode
         return true;
     }
 
-    public static function fromTocNode(TocNode $tocNode, string|null $menuType = null): NavMenuNode
+    public function withCurrentPath(string|null $currentPath): NavMenuNode
     {
-        $node = new NavMenuNode($tocNode->getFiles());
-        $node = $node->withMenuEntries($tocNode->getMenuEntries());
-        $options = $tocNode->getOptions();
-        unset($options['hidden']);
-        unset($options['titlesonly']);
-        unset($options['maxdepth']);
-        if ($menuType !== null) {
-            $options['menu'] = $menuType;
-        }
+        $that = clone $this;
+        $that->currentPath = $currentPath;
 
-        $node = $node->withOptions($options);
-        assert($node instanceof NavMenuNode);
+        return $that;
+    }
 
-        return $node;
+    /** @param string[] $rootlinePaths */
+    public function withRootlinePaths(array $rootlinePaths): NavMenuNode
+    {
+        $that = clone $this;
+        $that->rootlinePaths = $rootlinePaths;
+
+        return $that;
+    }
+
+    public function getCurrentPath(): string|null
+    {
+        return $this->currentPath;
+    }
+
+    /** @return string[] */
+    public function getRootlinePaths(): array
+    {
+        return $this->rootlinePaths;
     }
 }

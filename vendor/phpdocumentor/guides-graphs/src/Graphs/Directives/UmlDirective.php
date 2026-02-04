@@ -2,11 +2,20 @@
 
 declare(strict_types=1);
 
+/**
+ * This file is part of phpDocumentor.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @link https://phpdoc.org
+ */
+
 namespace phpDocumentor\Guides\Graphs\Directives;
 
 use phpDocumentor\Guides\Graphs\Nodes\UmlNode;
 use phpDocumentor\Guides\Nodes\Node;
-use phpDocumentor\Guides\ParserContext;
+use phpDocumentor\Guides\ReferenceResolvers\DocumentNameResolverInterface;
 use phpDocumentor\Guides\RestructuredText\Directives\BaseDirective;
 use phpDocumentor\Guides\RestructuredText\Parser\BlockContext;
 use phpDocumentor\Guides\RestructuredText\Parser\Directive;
@@ -35,8 +44,10 @@ use function str_replace;
  */
 final class UmlDirective extends BaseDirective
 {
-    public function __construct(private readonly LoggerInterface $logger)
-    {
+    public function __construct(
+        private readonly LoggerInterface $logger,
+        private readonly DocumentNameResolverInterface $documentNameResolver,
+    ) {
     }
 
     public function getName(): string
@@ -49,13 +60,10 @@ final class UmlDirective extends BaseDirective
         BlockContext $blockContext,
         Directive $directive,
     ): Node|null {
-        $parser = $blockContext->getDocumentParserContext()->getParser();
-        $parserContext = $parser->getParserContext();
-
         $value = implode("\n", $blockContext->getDocumentIterator()->toArray());
 
         if (empty($value)) {
-            $value = $this->loadExternalUmlFile($parserContext, $directive->getData());
+            $value = $this->loadExternalUmlFile($blockContext, $directive->getData());
             if ($value === null) {
                 return null;
             }
@@ -63,16 +71,19 @@ final class UmlDirective extends BaseDirective
 
         $node = new UmlNode($value);
         $node->setClasses(explode(' ', (string) $directive->getOption('classes')->getValue()));
-        $node->setCaption($directive->getData());
+        if ($directive->hasOption('caption')) {
+            $node->setCaption((string) $directive->getOption('caption')->getValue());
+        }
 
         return $node;
     }
 
-    private function loadExternalUmlFile(ParserContext $parserContext, string $path): string|null
+    private function loadExternalUmlFile(BlockContext $blockContext, string $path): string|null
     {
-        $fileName = sprintf(
-            '%s/%s',
-            dirname($parserContext->getCurrentAbsolutePath()),
+        $parser = $blockContext->getDocumentParserContext()->getParser();
+        $parserContext = $parser->getParserContext();
+        $fileName =  $this->documentNameResolver->absoluteUrl(
+            dirname($blockContext->getDocumentParserContext()->getContext()->getCurrentAbsolutePath()),
             $path,
         );
 

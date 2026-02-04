@@ -13,65 +13,87 @@ declare(strict_types=1);
 
 namespace phpDocumentor\Reflection\Php;
 
+use Override;
 use phpDocumentor\Reflection\DocBlock;
 use phpDocumentor\Reflection\Element;
 use phpDocumentor\Reflection\Fqsen;
 use phpDocumentor\Reflection\Location;
 use phpDocumentor\Reflection\Metadata\MetaDataContainer as MetaDataContainerInterface;
 
+use function is_string;
+use function trigger_error;
+
+use const E_USER_DEPRECATED;
+
 /**
  * Descriptor representing a constant
+ *
+ * @api
  */
-final class Constant implements Element, MetaDataContainerInterface
+final class Constant implements Element, MetaDataContainerInterface, AttributeContainer
 {
     use MetadataContainer;
+    use HasAttributes;
 
-    private Fqsen $fqsen;
+    private readonly Location $location;
 
-    private ?DocBlock $docBlock;
+    private readonly Location $endLocation;
 
-    private ?string $value;
-
-    private Location $location;
-
-    private Location $endLocation;
-
-    private Visibility $visibility;
-
-    private bool $final;
+    private readonly Visibility $visibility;
 
     /**
      * Initializes the object.
      */
     public function __construct(
-        Fqsen $fqsen,
-        ?DocBlock $docBlock = null,
-        ?string $value = null,
-        ?Location $location = null,
-        ?Location $endLocation = null,
-        ?Visibility $visibility = null,
-        bool $final = false
+        private readonly Fqsen $fqsen,
+        private readonly DocBlock|null $docBlock = null,
+        private Expression|string|null $value = null,
+        Location|null $location = null,
+        Location|null $endLocation = null,
+        Visibility|null $visibility = null,
+        private readonly bool $final = false,
     ) {
-        $this->fqsen = $fqsen;
-        $this->docBlock = $docBlock;
-        $this->value = $value;
         $this->location = $location ?: new Location(-1);
         $this->endLocation = $endLocation ?: new Location(-1);
         $this->visibility = $visibility ?: new Visibility(Visibility::PUBLIC_);
-        $this->final = $final;
+
+        if (!is_string($this->value)) {
+            return;
+        }
+
+        trigger_error(
+            'Constant values should be of type Expression, support for strings will be '
+            . 'removed in 6.x',
+            E_USER_DEPRECATED,
+        );
+        $this->value = new Expression($this->value, []);
     }
 
     /**
-     * Returns the value of this constant.
+     * Returns the expression value for this constant.
      */
-    public function getValue(): ?string
+    public function getValue(bool $asString = true): Expression|string|null
     {
+        if ($this->value === null) {
+            return null;
+        }
+
+        if ($asString) {
+            trigger_error(
+                'The expression value will become of type Expression by default',
+                E_USER_DEPRECATED,
+            );
+
+            return (string) $this->value;
+        }
+
         return $this->value;
     }
 
     /**
      * Returns the Fqsen of the element.
      */
+    #[Override]
     public function getFqsen(): Fqsen
     {
         return $this->fqsen;
@@ -80,6 +102,7 @@ final class Constant implements Element, MetaDataContainerInterface
     /**
      * Returns the name of the element.
      */
+    #[Override]
     public function getName(): string
     {
         return $this->fqsen->getName();
@@ -88,7 +111,7 @@ final class Constant implements Element, MetaDataContainerInterface
     /**
      * Returns DocBlock of this constant if available.
      */
-    public function getDocBlock(): ?DocBlock
+    public function getDocBlock(): DocBlock|null
     {
         return $this->docBlock;
     }

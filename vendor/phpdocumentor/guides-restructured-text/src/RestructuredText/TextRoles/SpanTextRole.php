@@ -2,23 +2,21 @@
 
 declare(strict_types=1);
 
+/**
+ * This file is part of phpDocumentor.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @link https://phpdoc.org
+ */
+
 namespace phpDocumentor\Guides\RestructuredText\TextRoles;
 
 use phpDocumentor\Guides\Nodes\Inline\GenericTextRoleInlineNode;
 use phpDocumentor\Guides\RestructuredText\Parser\DocumentParserContext;
 
-/**
- * This text role is extended by custom text roles that do not feature a base text role:
- *
- * ```
- * .. role:: custom
- *    :class: special
- *
- *    :custom:`interpreted text`
- *
- * ```
- */
-class SpanTextRole extends BaseTextRole
+final class SpanTextRole extends BaseTextRole
 {
     protected string $name = 'span';
 

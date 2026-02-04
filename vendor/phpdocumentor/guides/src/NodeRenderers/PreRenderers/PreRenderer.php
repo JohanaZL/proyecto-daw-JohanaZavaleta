@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+/**
+ * This file is part of phpDocumentor.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @link https://phpdoc.org
+ */
+
 namespace phpDocumentor\Guides\NodeRenderers\PreRenderers;
 
 use phpDocumentor\Guides\NodeRenderers\NodeRenderer;
@@ -19,9 +28,9 @@ final class PreRenderer implements NodeRenderer
     ) {
     }
 
-    public function supports(Node $node): bool
+    public function supports(string $nodeFqcn): bool
     {
-        return $this->nodeRenderer->supports($node);
+        return $this->nodeRenderer->supports($nodeFqcn);
     }
 
     public function render(Node $node, RenderContext $renderContext): string

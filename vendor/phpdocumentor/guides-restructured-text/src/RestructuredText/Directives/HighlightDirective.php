@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+/**
+ * This file is part of phpDocumentor.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @link https://phpdoc.org
+ */
+
 namespace phpDocumentor\Guides\RestructuredText\Directives;
 
 use phpDocumentor\Guides\RestructuredText\Parser\BlockContext;
@@ -12,7 +21,7 @@ use function trim;
 /**
  * https://www.sphinx-doc.org/en/master/usage/restructuredtext/directives.html#directive-highlight
  */
-class HighlightDirective extends ActionDirective
+final class HighlightDirective extends ActionDirective
 {
     public function getName(): string
     {

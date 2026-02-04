@@ -1,8 +1,10 @@
 ARGS ?=
 
 .USER = CURRENT_UID=$(shell id -u):$(shell id -g)
-.DOCKER_COMPOSE_RUN = ${.USER} docker-compose run --rm
+.DOCKER_COMPOSE_RUN = ${.USER} docker compose run --rm
 .PHP = docker run --user=$(shell id -u):$(shell id -g) -it --rm -v${CURDIR}:/data -w /data php:8.1
+
+CYPRESS_VERSION = 15.6.0
 
 .PHONY: help
 help:
@@ -41,7 +43,6 @@ help:
 	@echo "phpcs            - performs code-style checks";
 	@echo "phpcbf           - fixes most code-style issues";
 	@echo "phpstan          - performs static analysis on the codebase using phpstan";
-	@echo "psalm            - performs static analysis on the codebase using psalm";
 	@echo "";
 	@echo "== Release tools ==";
 	@echo "composer-mirror  - Runs a production-version of composer install for, i.e., the phar building";
@@ -87,10 +88,6 @@ phpcbf:
 phpstan:
 	${.PHP} ./bin/phpstan analyse src tests --memory-limit=1G incubator/*/src incubator/*/tests --configuration phpstan.neon ${ARGS}
 
-.PHONY: psalm
-psalm:
-	${.PHP} ./bin/psalm.phar
-
 .PHONY: lint
 lint: phpcs
 
@@ -112,20 +109,20 @@ unit-test integration-test functional-test:
 
 .PHONY: e2e-test
 e2e-test: node_modules/.bin/cypress build/default/index.html build/clean/index.html
-	docker run -it --rm -eCYPRESS_CACHE_FOLDER="/e2e/var/cache/.cypress" -v ${CURDIR}:/e2e -w /e2e cypress/included:10.3.0
+	docker run -it --rm -eCYPRESS_CACHE_FOLDER="/e2e/var/cache/.cypress" -v ${CURDIR}:/e2e -w /e2e cypress/included:${CYPRESS_VERSION}
 
 cypress/integration/default/%.spec.js: node_modules/.bin/cypress build/default/index.html .RUN_ALWAYS
-	docker run -it --rm -eCYPRESS_CACHE_FOLDER="/e2e/var/cache/.cypress" -v ${CURDIR}:/e2e -w /e2e cypress/included:10.3.0 -s $@
+	docker run -it --rm -eCYPRESS_CACHE_FOLDER="/e2e/var/cache/.cypress" -v ${CURDIR}:/e2e -w /e2e cypress/included:${CYPRESS_VERSION} -s $@
 
 cypress/integration/clean/%.spec.js: node_modules/.bin/cypress build/clean/index.html .RUN_ALWAYS
-	docker run -it --rm -eCYPRESS_CACHE_FOLDER="/e2e/var/cache/.cypress" -v ${CURDIR}:/e2e -w /e2e cypress/included:10.3.0 -s $@
+	docker run -it --rm -eCYPRESS_CACHE_FOLDER="/e2e/var/cache/.cypress" -v ${CURDIR}:/e2e -w /e2e cypress/included:${CYPRESS_VERSION} -s $@
 
 .PHONY: composer-require-checker
 composer-require-checker:
 	${.DOCKER_COMPOSE_RUN} --entrypoint=./tools/composer-require-checker phpdoc  check --config-file /opt/phpdoc/composer-require-config.json composer.json
 
 .PHONY: pre-commit-test
-pre-commit-test: test integration-test phpcs phpstan psalm composer-require-checker
+pre-commit-test: test integration-test phpcs phpstan composer-require-checker
 
 .PHONY: composer
 composer:
@@ -168,8 +165,8 @@ build-website: demo docs
 
 .PHONY: demo
 demo:
-	${.DOCKER_COMPOSE_RUN} phpdoc run --template=default -t ./build/website/demo/default
-	${.DOCKER_COMPOSE_RUN} phpdoc run --template=clean -t ./build/website/demo/clean
+	${.DOCKER_COMPOSE_RUN} phpdoc --template=default -t ./build/website/demo/default
+	${.DOCKER_COMPOSE_RUN} phpdoc --template=clean -t ./build/website/demo/clean
 
 .PHONY: .RUN_ALWAYS
 .RUN_ALWAYS:

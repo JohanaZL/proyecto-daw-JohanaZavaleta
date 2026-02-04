@@ -13,11 +13,12 @@ declare(strict_types=1);
 
 namespace phpDocumentor\Reflection\Php;
 
+use Override;
 use phpDocumentor\Reflection\DocBlockFactory;
 use phpDocumentor\Reflection\Exception;
 use phpDocumentor\Reflection\File as SourceFile;
 use phpDocumentor\Reflection\Fqsen;
-use phpDocumentor\Reflection\Php\Factory\Argument;
+use phpDocumentor\Reflection\Php\Expression\ExpressionPrinter;
 use phpDocumentor\Reflection\Php\Factory\Class_;
 use phpDocumentor\Reflection\Php\Factory\ClassConstant;
 use phpDocumentor\Reflection\Php\Factory\ConstructorPromotion;
@@ -32,11 +33,12 @@ use phpDocumentor\Reflection\Php\Factory\Interface_;
 use phpDocumentor\Reflection\Php\Factory\Method;
 use phpDocumentor\Reflection\Php\Factory\Noop;
 use phpDocumentor\Reflection\Php\Factory\Property;
+use phpDocumentor\Reflection\Php\Factory\Reducer\Attribute;
+use phpDocumentor\Reflection\Php\Factory\Reducer\Parameter;
 use phpDocumentor\Reflection\Php\Factory\Trait_;
 use phpDocumentor\Reflection\Php\Factory\TraitUse;
 use phpDocumentor\Reflection\Project as ProjectInterface;
 use phpDocumentor\Reflection\ProjectFactory as ProjectFactoryInterface;
-use PhpParser\PrettyPrinter\Standard as PrettyPrinter;
 
 use function is_array;
 
@@ -47,14 +49,14 @@ use const PHP_INT_MAX;
  */
 final class ProjectFactory implements ProjectFactoryInterface
 {
-    private ProjectFactoryStrategies $strategies;
+    private readonly ProjectFactoryStrategies $strategies;
 
     /**
      * Initializes the factory with a number of strategies.
      *
      * @param ProjectFactoryStrategy[]|ProjectFactoryStrategies $strategies
      */
-    public function __construct($strategies)
+    public function __construct(array|ProjectFactoryStrategies $strategies)
     {
         $this->strategies = is_array($strategies) ? new ProjectFactoryStrategies($strategies) : $strategies;
     }
@@ -65,44 +67,46 @@ final class ProjectFactory implements ProjectFactoryInterface
     public static function createInstance(): self
     {
         $docblockFactory = DocBlockFactory::createInstance();
+        $expressionPrinter = new ExpressionPrinter();
 
-        $methodStrategy =  new Method($docblockFactory);
+        $attributeReducer = new Attribute();
+        $parameterReducer = new Parameter($expressionPrinter);
+
+        $methodStrategy =  new Method($docblockFactory, [$attributeReducer, $parameterReducer]);
 
         $strategies = new ProjectFactoryStrategies(
             [
                 new \phpDocumentor\Reflection\Php\Factory\Namespace_(),
-                new Argument(new PrettyPrinter()),
-                new Class_($docblockFactory),
-                new Enum_($docblockFactory),
-                new EnumCase($docblockFactory, new PrettyPrinter()),
-                new Define($docblockFactory, new PrettyPrinter()),
-                new GlobalConstant($docblockFactory, new PrettyPrinter()),
-                new ClassConstant($docblockFactory, new PrettyPrinter()),
+                new Class_($docblockFactory, [$attributeReducer]),
+                new Enum_($docblockFactory, [$attributeReducer]),
+                new EnumCase($docblockFactory, $expressionPrinter, [$attributeReducer]),
+                new Define($docblockFactory, $expressionPrinter),
+                new GlobalConstant($docblockFactory, $expressionPrinter),
+                new ClassConstant($docblockFactory, $expressionPrinter, [$attributeReducer]),
                 new Factory\File($docblockFactory, NodesFactory::createInstance()),
-                new Function_($docblockFactory),
-                new Interface_($docblockFactory),
+                new Function_($docblockFactory, [$attributeReducer, $parameterReducer]),
+                new Interface_($docblockFactory, [$attributeReducer]),
                 $methodStrategy,
-                new Property($docblockFactory, new PrettyPrinter()),
-                new Trait_($docblockFactory),
+                new Property($docblockFactory, $expressionPrinter, [$attributeReducer, $parameterReducer]),
+                new Trait_($docblockFactory, [$attributeReducer]),
+
                 new IfStatement(),
                 new TraitUse(),
-            ]
+            ],
         );
 
         $strategies->addStrategy(
-            new ConstructorPromotion($methodStrategy, $docblockFactory, new PrettyPrinter()),
-            1100
+            new ConstructorPromotion($methodStrategy, $docblockFactory, $expressionPrinter, [$attributeReducer, $parameterReducer]),
+            1100,
         );
         $strategies->addStrategy(new Noop(), -PHP_INT_MAX);
 
-        return new static(
-            $strategies
-        );
+        return new self($strategies);
     }
 
     public function addStrategy(
         ProjectFactoryStrategy $strategy,
-        int $priority = ProjectFactoryStrategies::DEFAULT_PRIORITY
+        int $priority = ProjectFactoryStrategies::DEFAULT_PRIORITY,
     ): void {
         $this->strategies->addStrategy($strategy, $priority);
     }
@@ -114,6 +118,7 @@ final class ProjectFactory implements ProjectFactoryInterface
      *
      * @throws Exception When no matching strategy was found.
      */
+    #[Override]
     public function create(string $name, array $files): ProjectInterface
     {
         $contextStack = new ContextStack(new Project($name), null);

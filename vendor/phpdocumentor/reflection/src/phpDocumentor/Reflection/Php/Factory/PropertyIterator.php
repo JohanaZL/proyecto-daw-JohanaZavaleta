@@ -14,13 +14,18 @@ declare(strict_types=1);
 namespace phpDocumentor\Reflection\Php\Factory;
 
 use Iterator;
+use Override;
 use phpDocumentor\Reflection\Fqsen;
 use PhpParser\Comment\Doc;
 use PhpParser\Node\ComplexType;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Identifier;
 use PhpParser\Node\Name;
+use PhpParser\Node\PropertyHook;
 use PhpParser\Node\Stmt\Property as PropertyNode;
+
+use function method_exists;
+use function property_exists;
 
 /**
  * This class acts like a combination of a PropertyNode and PropertyProperty to
@@ -30,17 +35,14 @@ use PhpParser\Node\Stmt\Property as PropertyNode;
  */
 final class PropertyIterator implements Iterator
 {
-    private PropertyNode $property;
-
     /** @var int index of the current propertyProperty to use */
     private int $index = 0;
 
     /**
      * Instantiates this iterator with the propertyNode to iterate.
      */
-    public function __construct(PropertyNode $property)
+    public function __construct(private readonly PropertyNode $property)
     {
-        $this->property = $property;
     }
 
     /**
@@ -48,6 +50,20 @@ final class PropertyIterator implements Iterator
      */
     public function isPublic(): bool
     {
+        return $this->property->isPublic();
+    }
+
+    /**
+     * Returns asymmetric accessor value for current property.
+     *
+     * This method will return the same value as {@see self::isPublic()} when your phpparser version is < 5.2
+     */
+    public function isPublicSet(): bool
+    {
+        if ($this->isAsymmetric() === false) {
+            return $this->isPublic();
+        }
+
         return $this->property->isPublic();
     }
 
@@ -60,11 +76,53 @@ final class PropertyIterator implements Iterator
     }
 
     /**
+     * Returns asymetric accessor value for current property.
+     *
+     * This method will return the same value as {@see self::isProtected()} when your phpparser version is < 5.2
+     */
+    public function isProtectedSet(): bool
+    {
+        if ($this->isAsymmetric() === false) {
+            return $this->isProtected();
+        }
+
+        return $this->property->isProtectedSet();
+    }
+
+    /**
      * returns true when the current property is private.
      */
     public function isPrivate(): bool
     {
         return $this->property->isPrivate();
+    }
+
+    /**
+     * Returns asymetric accessor value for current property.
+     *
+     * This method will return the same value as {@see self::isPrivate()} when your phpparser version is < 5.2
+     */
+    public function isPrivateSet(): bool
+    {
+        if ($this->isAsymmetric() === false) {
+            return $this->isPrivate();
+        }
+
+        return $this->property->isPrivateSet();
+    }
+
+    /**
+     * Returns true when current property has asymetric accessors.
+     *
+     * This method will always return false when your phpparser version is < 5.2
+     */
+    public function isAsymmetric(): bool
+    {
+        if (method_exists($this->property, 'isPrivateSet') === false) {
+            return false;
+        }
+
+        return $this->property->isPublicSet() || $this->property->isProtectedSet() || $this->property->isPrivateSet();
     }
 
     /**
@@ -101,10 +159,8 @@ final class PropertyIterator implements Iterator
 
     /**
      * Gets the type of the property.
-     *
-     * @return Identifier|Name|ComplexType|null
      */
-    public function getType()
+    public function getType(): Identifier|Name|ComplexType|null
     {
         return $this->property->type;
     }
@@ -114,7 +170,7 @@ final class PropertyIterator implements Iterator
      *
      * The doc comment has to be the last comment associated with the node.
      */
-    public function getDocComment(): ?Doc
+    public function getDocComment(): Doc|null
     {
         $docComment = $this->property->props[$this->index]->getDocComment();
         if ($docComment === null) {
@@ -134,10 +190,8 @@ final class PropertyIterator implements Iterator
 
     /**
      * returns the default value of the current property.
-     *
-     * @return string|Expr|null
      */
-    public function getDefault()
+    public function getDefault(): Expr|null
     {
         return $this->property->props[$this->index]->default;
     }
@@ -150,41 +204,46 @@ final class PropertyIterator implements Iterator
         return $this->property->props[$this->index]->getAttribute('fqsen');
     }
 
-    /**
-     * @link http://php.net/manual/en/iterator.current.php
-     */
+    /** @return PropertyHook[] */
+    public function getHooks(): array
+    {
+        if (property_exists($this->property, 'hooks') === false) {
+            return [];
+        }
+
+        return $this->property->hooks;
+    }
+
+    /** @link http://php.net/manual/en/iterator.current.php */
+    #[Override]
     public function current(): self
     {
         return $this;
     }
 
-    /**
-     * @link http://php.net/manual/en/iterator.next.php
-     */
+    /** @link http://php.net/manual/en/iterator.next.php */
+    #[Override]
     public function next(): void
     {
         ++$this->index;
     }
 
-    /**
-     * @link http://php.net/manual/en/iterator.key.php
-     */
-    public function key(): ?int
+    /** @link http://php.net/manual/en/iterator.key.php */
+    #[Override]
+    public function key(): int|null
     {
         return $this->index;
     }
 
-    /**
-     * @link http://php.net/manual/en/iterator.valid.php
-     */
+    /** @link http://php.net/manual/en/iterator.valid.php */
+    #[Override]
     public function valid(): bool
     {
         return isset($this->property->props[$this->index]);
     }
 
-    /**
-     * @link http://php.net/manual/en/iterator.rewind.php
-     */
+    /** @link http://php.net/manual/en/iterator.rewind.php */
+    #[Override]
     public function rewind(): void
     {
         $this->index = 0;

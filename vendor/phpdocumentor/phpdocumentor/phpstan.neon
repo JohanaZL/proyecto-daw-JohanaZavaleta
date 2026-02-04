@@ -5,6 +5,12 @@ parameters:
   level: 6
   inferPrivatePropertyTypeFromConstructor: true
   treatPhpDocTypesAsCertain: false
+  scanFiles:
+    - vendor/phpdocumentor/guides/src/DependencyInjection/GuidesExtension.php
+  paths:
+    - src
+    - tests
+
   ignoreErrors:
 
     # PHPStan does not play nice with Symfony Config's fluid interface
@@ -22,30 +28,7 @@ parameters:
     # PHPStan doesn't support inheritance of TDescriptor
     - '#Parameter \#2 \$assembler of method phpDocumentor\\Descriptor\\Builder\\AssemblerFactory::(register|registerFallback)\(\) expects phpDocumentor\\Descriptor\\Builder\\AssemblerInterface.* given\.#'
 
-    -
-            message: "#^Parameter \\#1 \\$value of method phpDocumentor\\\\GraphViz\\\\Graph\\:\\:setCenter\\(\\) expects bool, string given\\.$#"
-            count: 1
-            path: src/phpDocumentor/Transformer/Writer/Graph/GraphVizClassDiagram.php
-
-    -
-            message: "#^Parameter \\#1 \\$value of method phpDocumentor\\\\GraphViz\\\\Graph\\:\\:setConcentrate\\(\\) expects bool, string given\\.$#"
-            count: 1
-            path: src/phpDocumentor/Transformer/Writer/Graph/GraphVizClassDiagram.php
-
-    -
-            message: "#^Parameter \\#1 \\$value of method phpDocumentor\\\\GraphViz\\\\Graph\\:\\:setRankSep\\(\\) expects float, string given\\.$#"
-            count: 1
-            path: src/phpDocumentor/Transformer/Writer/Graph/GraphVizClassDiagram.php
-
-    -
-            message: "#^Parameter \\#1 \\$value of method phpDocumentor\\\\GraphViz\\\\Node\\:\\:setFontSize\\(\\) expects float, string given\\.$#"
-            count: 1
-            path: src/phpDocumentor/Transformer/Writer/Graph/GraphVizClassDiagram.php
-
-    -
-            message: "#^Parameter \\#1 \\$value of method phpDocumentor\\\\GraphViz\\\\Graph\\:\\:setFontSize\\(\\) expects float, string given\\.$#"
-            count: 1
-            path: src/phpDocumentor/Transformer/Writer/Graph/GraphVizClassDiagram.php
+    - '#Class phpDocumentor\\Guides\\Compiler\\DescriptorAwareCompilerContext extends \@final class phpDocumentor\\Guides\\Compiler\\CompilerContext#'
 
   excludePaths:
    #test data
@@ -61,3 +44,4 @@ parameters:
     - %currentWorkingDirectory%/tests/functional/**/*.php
     - %currentWorkingDirectory%/incubator/*/tests/unit/*.php
     - %currentWorkingDirectory%/incubator/*/tests/unit/**/*.php
+    - %currentWorkingDirectory%/tests/cli/tests/project_with_vendor_extensions/*.php

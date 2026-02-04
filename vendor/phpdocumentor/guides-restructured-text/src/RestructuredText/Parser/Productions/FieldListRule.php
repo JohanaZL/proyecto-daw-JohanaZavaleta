@@ -45,16 +45,24 @@ final class FieldListRule implements Rule
 
     public function applies(BlockContext $blockContext): bool
     {
-        return $this->isFieldLine($blockContext->getDocumentIterator()->current());
+        return self::isFieldLine($blockContext->getDocumentIterator()->current());
     }
 
     public function apply(BlockContext $blockContext, CompoundNode|null $on = null): Node|null
     {
         $iterator = $blockContext->getDocumentIterator();
         $fieldListItemNodes = [];
-        while ($iterator->valid() && $this->isFieldLine($iterator->current())) {
+        while ($iterator->valid() && self::isFieldLine($iterator->current())) {
             $fieldListItemNodes[] = $this->createListItem($blockContext);
             $iterator->next();
+            while ($iterator->valid() && LinesIterator::isEmptyLine($iterator->current())) {
+                $peek = $iterator->peek();
+                if (!LinesIterator::isEmptyLine($peek) && !self::isFieldLine($peek)) {
+                    break;
+                }
+
+                $iterator->next();
+            }
         }
 
         if ($on instanceof DocumentNode && !$on->isTitleFound()) {
@@ -95,8 +103,8 @@ final class FieldListRule implements Rule
     {
         if (preg_match('/^:([^:]+):( (.*)|)$/mUsi', $line, $match) > 0) {
             return [
-                $match[1] ?? '',
-                $match[2] ?? '',
+                $match[1],
+                $match[2],
             ];
         }
 
@@ -125,7 +133,7 @@ final class FieldListRule implements Rule
         $buffer = new Buffer();
         $documentIterator = $blockContext->getDocumentIterator();
         $nextLine = $documentIterator->getNextLine();
-        if ($nextLine !== null && !$this->isFieldLine($nextLine)) {
+        if ($nextLine !== null && !self::isFieldLine($nextLine)) {
             $indenting = mb_strlen($nextLine) - mb_strlen(trim($nextLine));
             if ($indenting > 0) {
                 $buffer->push(mb_substr($documentIterator->getNextLine() ?? '', $indenting));
@@ -173,8 +181,12 @@ final class FieldListRule implements Rule
         }
     }
 
-    private function isFieldLine(string $currentLine): bool
+    private static function isFieldLine(string|null $currentLine): bool
     {
+        if ($currentLine === null) {
+            return false;
+        }
+
         if (LinesIterator::isEmptyLine($currentLine)) {
             return false;
         }

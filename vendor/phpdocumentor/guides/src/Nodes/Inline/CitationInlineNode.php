@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+/**
+ * This file is part of phpDocumentor.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @link https://phpdoc.org
+ */
+
 namespace phpDocumentor\Guides\Nodes\Inline;
 
 /**
@@ -13,7 +22,7 @@ namespace phpDocumentor\Guides\Nodes\Inline;
  *
  * https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html#citations
  */
-class CitationInlineNode extends AnnotationInlineNode
+final class CitationInlineNode extends AnnotationInlineNode
 {
     final public const TYPE = 'citation_inline';
 

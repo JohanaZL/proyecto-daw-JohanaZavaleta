@@ -28,13 +28,14 @@
             <xs:enumeration value="public"/>
             <xs:enumeration value="protected"/>
             <xs:enumeration value="private"/>
-            <xs:enumeration value="hidden"/>
+            <xs:enumeration value="internal"/>
         </xs:restriction>
     </xs:simpleType>
 
     <xs:complexType name="phpdocumentorType">
         <xs:sequence>
             <xs:element name="title" type="pd:title" minOccurs="0" maxOccurs="1" default="Documentation"/>
+            <xs:element name="use-cache" type="xs:boolean" minOccurs="0" maxOccurs="1" default="true"/>
             <xs:element name="paths" type="pd:pathsType" minOccurs="0" maxOccurs="1"/>
             <xs:element name="version" type="pd:versionType" minOccurs="0" maxOccurs="unbounded"/>
             <xs:element name="setting" type="pd:settingType" minOccurs="0" maxOccurs="unbounded"/>
@@ -91,6 +92,7 @@
             <xs:element name="examples" type="pd:sourceType" minOccurs="0" maxOccurs="1"/>
         </xs:sequence>
         <xs:attribute name="format" type="xs:string" default="php" />
+        <xs:attribute name="ignore-packages" type="xs:boolean" default="false"/>
     </xs:complexType>
 
     <xs:complexType name="rstGuideType">

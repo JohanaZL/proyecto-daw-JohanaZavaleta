@@ -2,9 +2,18 @@
 
 declare(strict_types=1);
 
+/**
+ * This file is part of phpDocumentor.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @link https://phpdoc.org
+ */
+
 namespace phpDocumentor\Guides\RestructuredText\TextRoles;
 
-use phpDocumentor\Guides\Nodes\Inline\InlineNode;
+use phpDocumentor\Guides\Nodes\Inline\InlineNodeInterface;
 use phpDocumentor\Guides\RestructuredText\Parser\DocumentParserContext;
 
 interface TextRole
@@ -23,5 +32,5 @@ interface TextRole
         string $role,
         string $content,
         string $rawContent,
-    ): InlineNode;
+    ): InlineNodeInterface;
 }

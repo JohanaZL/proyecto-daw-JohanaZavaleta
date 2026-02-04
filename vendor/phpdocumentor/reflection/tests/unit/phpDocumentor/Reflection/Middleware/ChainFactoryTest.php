@@ -14,18 +14,13 @@ declare(strict_types=1);
 namespace phpDocumentor\Reflection\Middleware;
 
 use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 
-/**
- * @coversDefaultClass \phpDocumentor\Reflection\Middleware\ChainFactory
- * @covers ::<private>
- */
+#[CoversClass(ChainFactory::class)]
 final class ChainFactoryTest extends TestCase
 {
-    /**
-     * @covers ::createExecutionChain
-     */
     public function testItCreatesAChainOfCallablesThatWillInvokeAllMiddlewares(): void
     {
         $exampleCommand = new class implements Command {
@@ -41,38 +36,32 @@ final class ChainFactoryTest extends TestCase
                 $result->counter = 'a';
 
                 return $result;
-            }
+            },
         );
 
         $this->assertInstanceOf(stdClass::class, $chain(new $exampleCommand()));
         $this->assertSame('abc', $chain(new $exampleCommand())->counter);
     }
 
-    /**
-     * @covers ::createExecutionChain
-     */
     public function testItThrowsAnExceptionIfAnythingOtherThanAMiddlewareIsPassed(): void
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage(
-            'Middleware must be an instance of phpDocumentor\Reflection\Middleware\Middleware but string was given'
+            'Middleware must be an instance of phpDocumentor\Reflection\Middleware\Middleware but string was given',
         );
         $middleware = '1';
 
         ChainFactory::createExecutionChain(
             [$middleware],
-            static fn (): stdClass => new stdClass()
+            static fn (): stdClass => new stdClass(),
         );
     }
 
     private function givenAMiddleware(string $exampleValue): Middleware
     {
         return new class ($exampleValue) implements Middleware {
-            private string $exampleAddedValue;
-
-            public function __construct(string $exampleAddedValue)
+            public function __construct(private readonly string $exampleAddedValue)
             {
-                $this->exampleAddedValue = $exampleAddedValue;
             }
 
             public function execute(Command $command, callable $next): object

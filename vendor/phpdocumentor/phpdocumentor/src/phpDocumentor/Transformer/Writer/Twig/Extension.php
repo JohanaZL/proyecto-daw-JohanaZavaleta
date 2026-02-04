@@ -17,6 +17,7 @@ use ArrayIterator;
 use InvalidArgumentException;
 use League\CommonMark\ConverterInterface;
 use League\Uri\Uri;
+use phpDocumentor\Descriptor\AttributeDescriptor;
 use phpDocumentor\Descriptor\Collection;
 use phpDocumentor\Descriptor\Descriptor;
 use phpDocumentor\Descriptor\DescriptorAbstract;
@@ -24,6 +25,8 @@ use phpDocumentor\Descriptor\DocBlock\DescriptionDescriptor;
 use phpDocumentor\Descriptor\DocumentationSetDescriptor;
 use phpDocumentor\Descriptor\EnumDescriptor;
 use phpDocumentor\Descriptor\Interfaces\ArgumentInterface;
+use phpDocumentor\Descriptor\Interfaces\AttributedInterface;
+use phpDocumentor\Descriptor\Interfaces\AttributeInterface;
 use phpDocumentor\Descriptor\Interfaces\ClassInterface;
 use phpDocumentor\Descriptor\Interfaces\ConstantInterface;
 use phpDocumentor\Descriptor\Interfaces\ContainerInterface;
@@ -48,6 +51,7 @@ use phpDocumentor\Descriptor\Tag\SeeDescriptor;
 use phpDocumentor\Path;
 use phpDocumentor\Reflection\DocBlock\Tags\Reference;
 use phpDocumentor\Reflection\Fqsen;
+use phpDocumentor\Reflection\Php\Expression;
 use phpDocumentor\Reflection\Type;
 use Twig\Environment;
 use Twig\Extension\AbstractExtension;
@@ -57,7 +61,9 @@ use Twig\TwigFunction;
 use Twig\TwigTest;
 use Webmozart\Assert\Assert;
 
+use function array_map;
 use function array_unshift;
+use function in_array;
 use function ltrim;
 use function method_exists;
 use function sprintf;
@@ -149,6 +155,8 @@ final class Extension extends AbstractExtension implements ExtensionInterface, G
             new TwigTest('property', static fn (Descriptor $el) => $el instanceof PropertyInterface),
             new TwigTest('method', static fn (Descriptor $el) => $el instanceof MethodInterface),
             new TwigTest('argument', static fn (Descriptor $el) => $el instanceof ArgumentInterface),
+            new TwigTest('attribute', static fn (Descriptor $el) => $el instanceof AttributeInterface),
+            new TwigTest('attributed', static fn (Descriptor $el) => $el instanceof AttributedInterface),
             new TwigTest('function', static fn (Descriptor $el) => $el instanceof FunctionInterface),
             new TwigTest('constant', static fn (Descriptor $el) => $el instanceof ConstantInterface),
         ];
@@ -178,7 +186,7 @@ final class Extension extends AbstractExtension implements ExtensionInterface, G
                         '/',
                     );
                     if (! $absolutePath) {
-                        return '';
+                        return '<base href="./">';
                     }
 
                     return '<base href="' . $absolutePath . '">';
@@ -243,16 +251,16 @@ final class Extension extends AbstractExtension implements ExtensionInterface, G
                 'methods',
                 static function (DescriptorAbstract $descriptor): Collection {
                     $methods = new Collection();
-                    if (method_exists($descriptor, 'getInheritedMethods')) {
-                        $methods = $methods->merge($descriptor->getInheritedMethods());
+                    if (method_exists($descriptor, 'getMethods')) {
+                        $methods = $methods->merge($descriptor->getMethods());
                     }
 
                     if (method_exists($descriptor, 'getMagicMethods')) {
                         $methods = $methods->merge($descriptor->getMagicMethods());
                     }
 
-                    if (method_exists($descriptor, 'getMethods')) {
-                        $methods = $methods->merge($descriptor->getMethods());
+                    if (method_exists($descriptor, 'getInheritedMethods')) {
+                        $methods = $methods->merge($descriptor->getInheritedMethods());
                     }
 
                     return $methods;
@@ -262,16 +270,16 @@ final class Extension extends AbstractExtension implements ExtensionInterface, G
                 'properties',
                 static function (DescriptorAbstract $descriptor): Collection {
                     $properties = new Collection();
-                    if (method_exists($descriptor, 'getInheritedProperties')) {
-                        $properties = $properties->merge($descriptor->getInheritedProperties());
+                    if (method_exists($descriptor, 'getProperties')) {
+                        $properties = $properties->merge($descriptor->getProperties());
                     }
 
                     if (method_exists($descriptor, 'getMagicProperties')) {
                         $properties = $properties->merge($descriptor->getMagicProperties());
                     }
 
-                    if (method_exists($descriptor, 'getProperties')) {
-                        $properties = $properties->merge($descriptor->getProperties());
+                    if (method_exists($descriptor, 'getInheritedProperties')) {
+                        $properties = $properties->merge($descriptor->getInheritedProperties());
                     }
 
                     return $properties;
@@ -281,16 +289,16 @@ final class Extension extends AbstractExtension implements ExtensionInterface, G
                 'constants',
                 static function (DescriptorAbstract $descriptor): Collection {
                     $constants = new Collection();
-                    if (method_exists($descriptor, 'getInheritedConstants')) {
-                        $constants = $constants->merge($descriptor->getInheritedConstants());
+                    if (method_exists($descriptor, 'getConstants')) {
+                        $constants = $constants->merge($descriptor->getConstants());
                     }
 
                     if (method_exists($descriptor, 'getMagicConstants')) {
                         $constants = $constants->merge($descriptor->getMagicConstants());
                     }
 
-                    if (method_exists($descriptor, 'getConstants')) {
-                        $constants = $constants->merge($descriptor->getConstants());
+                    if (method_exists($descriptor, 'getInheritedConstants')) {
+                        $constants = $constants->merge($descriptor->getInheritedConstants());
                     }
 
                     return $constants;
@@ -304,6 +312,17 @@ final class Extension extends AbstractExtension implements ExtensionInterface, G
                     }
 
                     return new Collection();
+                },
+            ),
+            new TwigFunction(
+                'attributes',
+                static function (AttributedInterface $descriptor): Collection {
+                    $attributes = Collection::fromInterfaceString(AttributeInterface::class);
+                    if (method_exists($descriptor, 'getAttributes')) {
+                        $attributes = $attributes->merge($descriptor->getAttributes());
+                    }
+
+                    return $attributes;
                 },
             ),
             new TwigFunction(
@@ -369,12 +388,17 @@ final class Extension extends AbstractExtension implements ExtensionInterface, G
             'sortByVisibility' => new TwigFilter('sortByVisibility', $this->sortByVisibility(...)),
             'export' => new TwigFilter(
                 'export',
-                static fn ($var) => var_export($var, true)
+                static fn ($var) => var_export($var, true),
             ),
             'description' => new TwigFilter(
                 'description',
                 $this->renderDescription(...),
                 ['needs_context' => true],
+            ),
+            'expression' => new TwigFilter(
+                'expression',
+                $this->renderExpression(...),
+                ['needs_context' => true, 'is_safe' => ['html']],
             ),
             'shortFQSEN' => new TwigFilter(
                 'shortFQSEN',
@@ -385,6 +409,21 @@ final class Extension extends AbstractExtension implements ExtensionInterface, G
                     }
 
                     return $fqsenOrTitle;
+                },
+            ),
+            'specializedAttributes' => new TwigFilter(
+                'specializedAttributes',
+                static function (Collection $attributes): Collection {
+                    $filtered = Collection::fromClassString(AttributeDescriptor::class);
+                    foreach ($attributes as $attribute) {
+                        if (in_array((string) $attribute->getFullyQualifiedStructuralElementName(), ['\Deprecated'])) {
+                            continue;
+                        }
+
+                        $filtered->add($attribute);
+                    }
+
+                    return $filtered;
                 },
             ),
         ];
@@ -420,6 +459,21 @@ final class Extension extends AbstractExtension implements ExtensionInterface, G
         return vsprintf($description->getBodyTemplate(), $tagStrings);
     }
 
+    /** @param mixed[] $context */
+    public function renderExpression(array $context, Expression|null $expression): string
+    {
+        if ($expression === null) {
+            return '';
+        }
+
+        $parts = array_map(
+            fn (Fqsen|Type $value) => $this->renderRoute($context, $value, LinkRenderer::PRESENTATION_CLASS_SHORT),
+            $expression->getParts(),
+        );
+
+        return $expression->render($parts);
+    }
+
     /**
      * @param mixed[] $context
      * @param array<Type>|Type|DescriptorAbstract|Fqsen|Reference\Reference|Path|string|iterable<mixed> $value
@@ -437,7 +491,7 @@ final class Extension extends AbstractExtension implements ExtensionInterface, G
     private function contextRouteRenderer(array $context): LinkRenderer
     {
         return $this->routeRenderer
-            ->withDestination(ltrim($context['destinationPath'] ?? $context['env']->getCurrentFileDestination(), '/\\'))
+            ->withDestination(ltrim($context['destinationPath'], '/\\'))
             ->withProject($context['project'])
             ->forDocumentationSet($context['documentationSet']);
     }
@@ -479,18 +533,13 @@ final class Extension extends AbstractExtension implements ExtensionInterface, G
      */
     public function sortByVisibility(Collection $collection): ArrayIterator
     {
-        $visibilityOrder = [
-            'public' => 0,
-            'protected' => 1,
-            'private' => 2,
-        ];
         $iterator = $collection->getIterator();
         $iterator->uasort(
-            static function (Descriptor $a, Descriptor $b) use ($visibilityOrder): int {
+            static function (Descriptor $a, Descriptor $b): int {
                 $prio = 0;
                 if ($a instanceof VisibilityInterface && $b instanceof VisibilityInterface) {
-                    $visibilityPriorityA = $visibilityOrder[$a->getVisibility()] ?? 0;
-                    $visibilityPriorityB = $visibilityOrder[$b->getVisibility()] ?? 0;
+                    $visibilityPriorityA = $a->getVisibility()->readModifier()->getWeight();
+                    $visibilityPriorityB = $b->getVisibility()->readModifier()->getWeight();
                     $prio = $visibilityPriorityA <=> $visibilityPriorityB;
                 }
 

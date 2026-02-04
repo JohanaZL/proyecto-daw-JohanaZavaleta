@@ -17,6 +17,7 @@ use Iterator;
 use OutOfBoundsException;
 
 use function chr;
+use function count;
 use function explode;
 use function max;
 use function mb_strpos;
@@ -27,7 +28,7 @@ use function str_replace;
 use function trim;
 
 /** @implements Iterator<string> */
-class LinesIterator implements Iterator
+final class LinesIterator implements Iterator
 {
     /** @var string[] */
     private array $lines = [];
@@ -133,6 +134,11 @@ class LinesIterator implements Iterator
         return $this->lines;
     }
 
+    public function isEmpty(): bool
+    {
+        return count($this->lines) === 0 || (count($this->lines) === 1 && trim($this->lines[0]) === '');
+    }
+
     /** @psalm-assert-if-false non-empty-string $line */
     public static function isEmptyLine(string|null $line): bool
     {
@@ -183,6 +189,11 @@ class LinesIterator implements Iterator
      */
     public static function isIndented(string $line, int $minIndent): bool
     {
-        return mb_strpos($line, str_repeat(' ', max(1, $minIndent))) === 0;
+        return self::isIndentedBy($line, $minIndent, ' ') || self::isIndentedBy($line, $minIndent, "\t");
+    }
+
+    private static function isIndentedBy(string $line, int $minIndent, string $indentationChar): bool
+    {
+        return mb_strpos($line, str_repeat($indentationChar, max(1, $minIndent))) === 0;
     }
 }

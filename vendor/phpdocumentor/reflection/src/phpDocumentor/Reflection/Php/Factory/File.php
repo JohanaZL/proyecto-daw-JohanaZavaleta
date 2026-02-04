@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace phpDocumentor\Reflection\Php\Factory;
 
+use Override;
 use phpDocumentor\Reflection\DocBlock as DocBlockInstance;
 use phpDocumentor\Reflection\DocBlockFactoryInterface;
 use phpDocumentor\Reflection\File as FileSystemFile;
@@ -34,7 +35,6 @@ use PhpParser\Node\Stmt\Interface_ as InterfaceNode;
 use PhpParser\Node\Stmt\Trait_ as TraitNode;
 
 use function array_merge;
-use function get_class;
 use function in_array;
 
 /**
@@ -48,8 +48,6 @@ final class File extends AbstractFactory
         InlineHTML::class,
     ];
 
-    private NodesFactory $nodesFactory;
-
     /** @var callable */
     private $middlewareChain;
 
@@ -60,10 +58,9 @@ final class File extends AbstractFactory
      */
     public function __construct(
         DocBlockFactoryInterface $docBlockFactory,
-        NodesFactory $nodesFactory,
-        array $middleware = []
+        private readonly NodesFactory $nodesFactory,
+        array $middleware = [],
     ) {
-        $this->nodesFactory = $nodesFactory;
         parent::__construct($docBlockFactory);
 
         $lastCallable = fn ($command): FileElement => $this->createFile($command);
@@ -71,6 +68,7 @@ final class File extends AbstractFactory
         $this->middlewareChain = ChainFactory::createExecutionChain($middleware, $lastCallable);
     }
 
+    #[Override]
     public function matches(ContextStack $context, object $object): bool
     {
         return $object instanceof FileSystemFile;
@@ -86,17 +84,20 @@ final class File extends AbstractFactory
      * @param FileSystemFile $object path to the file to convert to an File object.
      * @param StrategyContainer $strategies used to convert nested objects.
      */
-    protected function doCreate(ContextStack $context, object $object, StrategyContainer $strategies): void
+    #[Override]
+    protected function doCreate(ContextStack $context, object $object, StrategyContainer $strategies): object|null
     {
         $command = new CreateCommand($context, $object, $strategies);
         $middlewareChain = $this->middlewareChain;
 
         $file = $middlewareChain($command);
         if ($file === null) {
-            return;
+            return null;
         }
 
         $context->getProject()->addFile($file);
+
+        return $file;
     }
 
     private function createFile(CreateCommand $command): FileElement
@@ -111,7 +112,7 @@ final class File extends AbstractFactory
             $file->md5(),
             $file->path(),
             $code,
-            $docBlock
+            $docBlock,
         );
 
         $this->createElements($command->getContext()->push($result), $nodes, $command->getStrategies());
@@ -119,13 +120,11 @@ final class File extends AbstractFactory
         return $result;
     }
 
-    /**
-     * @param Node[] $nodes
-     */
+    /** @param Node[] $nodes */
     private function createElements(
         ContextStack $contextStack,
         array $nodes,
-        StrategyContainer $strategies
+        StrategyContainer $strategies,
     ): void {
         foreach ($nodes as $node) {
             $strategy = $strategies->findMatching($contextStack, $node);
@@ -133,17 +132,15 @@ final class File extends AbstractFactory
         }
     }
 
-    /**
-     * @param Node[] $nodes
-     */
+    /** @param Node[] $nodes */
     protected function createFileDocBlock(
-        ?Context $context = null,
-        array $nodes = []
-    ): ?DocBlockInstance {
+        Context|null $context = null,
+        array $nodes = [],
+    ): DocBlockInstance|null {
         $node = null;
         $comments = [];
         foreach ($nodes as $n) {
-            if (!in_array(get_class($n), self::SKIPPED_NODE_TYPES)) {
+            if (!in_array($n::class, self::SKIPPED_NODE_TYPES)) {
                 $node = $n;
                 break;
             }

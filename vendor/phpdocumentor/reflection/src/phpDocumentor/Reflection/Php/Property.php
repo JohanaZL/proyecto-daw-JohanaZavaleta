@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace phpDocumentor\Reflection\Php;
 
+use Override;
 use phpDocumentor\Reflection\DocBlock;
 use phpDocumentor\Reflection\Element;
 use phpDocumentor\Reflection\Fqsen;
@@ -20,64 +21,81 @@ use phpDocumentor\Reflection\Location;
 use phpDocumentor\Reflection\Metadata\MetaDataContainer as MetaDataContainerInterface;
 use phpDocumentor\Reflection\Type;
 
+use function is_string;
+use function trigger_error;
+
+use const E_USER_DEPRECATED;
+
 /**
  * Descriptor representing a property.
+ *
+ * @api
  */
-final class Property implements Element, MetaDataContainerInterface
+final class Property implements Element, MetaDataContainerInterface, AttributeContainer
 {
     use MetadataContainer;
-
-    private Fqsen $fqsen;
-
-    private ?DocBlock $docBlock;
+    use HasAttributes;
 
     /** @var string[] $types */
     private array $types = [];
 
-    private ?string $default = null;
+    private Visibility|null $visibility = null;
 
-    private bool $static = false;
+    private readonly Location $location;
 
-    private ?Visibility $visibility = null;
-
-    private Location $location;
-
-    private Location $endLocation;
-
-    private ?Type $type;
-
-    private bool $readOnly;
+    private readonly Location $endLocation;
 
     /**
      * @param Visibility|null $visibility when null is provided a default 'public' is set.
+     * @param PropertyHook[] $hooks
      */
     public function __construct(
-        Fqsen $fqsen,
-        ?Visibility $visibility = null,
-        ?DocBlock $docBlock = null,
-        ?string $default = null,
-        bool $static = false,
-        ?Location $location = null,
-        ?Location $endLocation = null,
-        ?Type $type = null,
-        bool $readOnly = false
+        private readonly Fqsen $fqsen,
+        Visibility|null $visibility = null,
+        private readonly DocBlock|null $docBlock = null,
+        private Expression|string|null $default = null,
+        private readonly bool $static = false,
+        Location|null $location = null,
+        Location|null $endLocation = null,
+        private readonly Type|null $type = null,
+        private readonly bool $readOnly = false,
+        private readonly array $hooks = [],
+        private readonly bool $virtual = false,
     ) {
-        $this->fqsen = $fqsen;
         $this->visibility = $visibility ?: new Visibility('public');
-        $this->docBlock = $docBlock;
-        $this->default = $default;
-        $this->static = $static;
         $this->location = $location ?: new Location(-1);
         $this->endLocation = $endLocation ?: new Location(-1);
-        $this->type = $type;
-        $this->readOnly = $readOnly;
+
+        if (!is_string($this->default)) {
+            return;
+        }
+
+        trigger_error(
+            'Default values for properties should be of type Expression, support for strings will be '
+            . 'removed in 7.x',
+            E_USER_DEPRECATED,
+        );
+        $this->default = new Expression($this->default, []);
     }
 
     /**
-     * returns the default value of this property.
+     * Returns the default value for this property.
      */
-    public function getDefault(): ?string
+    public function getDefault(bool $asString = true): Expression|string|null
     {
+        if ($this->default === null) {
+            return null;
+        }
+
+        if ($asString) {
+            trigger_error(
+                'The Default value will become of type Expression by default',
+                E_USER_DEPRECATED,
+            );
+
+            return (string) $this->default;
+        }
+
         return $this->default;
     }
 
@@ -110,7 +128,7 @@ final class Property implements Element, MetaDataContainerInterface
     /**
      * Return visibility of the property.
      */
-    public function getVisibility(): ?Visibility
+    public function getVisibility(): Visibility|null
     {
         return $this->visibility;
     }
@@ -118,6 +136,7 @@ final class Property implements Element, MetaDataContainerInterface
     /**
      * Returns the Fqsen of the element.
      */
+    #[Override]
     public function getFqsen(): Fqsen
     {
         return $this->fqsen;
@@ -126,6 +145,7 @@ final class Property implements Element, MetaDataContainerInterface
     /**
      * Returns the name of the element.
      */
+    #[Override]
     public function getName(): string
     {
         return $this->fqsen->getName();
@@ -134,7 +154,7 @@ final class Property implements Element, MetaDataContainerInterface
     /**
      * Returns the DocBlock of this property.
      */
-    public function getDocBlock(): ?DocBlock
+    public function getDocBlock(): DocBlock|null
     {
         return $this->docBlock;
     }
@@ -149,7 +169,7 @@ final class Property implements Element, MetaDataContainerInterface
         return $this->endLocation;
     }
 
-    public function getType(): ?Type
+    public function getType(): Type|null
     {
         return $this->type;
     }
@@ -157,5 +177,21 @@ final class Property implements Element, MetaDataContainerInterface
     public function isReadOnly(): bool
     {
         return $this->readOnly;
+    }
+
+    /** @return PropertyHook[] */
+    public function getHooks(): array
+    {
+        return $this->hooks;
+    }
+
+    /**
+     * Returns true when this property is virtual (not explicitly backed).
+     *
+     * A virtual property is one where no defined hook references the property itself.
+     */
+    public function isVirtual(): bool
+    {
+        return $this->virtual;
     }
 }

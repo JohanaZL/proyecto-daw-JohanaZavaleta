@@ -29,6 +29,8 @@ use PhpParser\Node\Name;
 use PhpParser\Node\Stmt\Class_ as ClassNode;
 use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\Node\Stmt\Enum_ as EnumNode;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Prophecy\Prophecy\ObjectProphecy;
@@ -36,17 +38,11 @@ use stdClass;
 
 use function current;
 
-/**
- * @uses \phpDocumentor\Reflection\Php\Enum_
- * @uses \phpDocumentor\Reflection\Php\Constant
- * @uses \phpDocumentor\Reflection\Php\Method
- * @uses \phpDocumentor\Reflection\Php\Factory\Enum_::matches
- *
- * @coversDefaultClass \phpDocumentor\Reflection\Php\Factory\Enum_
- * @covers \phpDocumentor\Reflection\Php\Factory\AbstractFactory
- * @covers ::<protected>
- * @covers ::<private>
- */
+#[CoversClass(Enum_::class)]
+#[CoversClass(AbstractFactory::class)]
+#[UsesClass('\phpDocumentor\Reflection\Php\Enum_')]
+#[UsesClass('\phpDocumentor\Reflection\Php\Constant')]
+#[UsesClass('\phpDocumentor\Reflection\Php\Method')]
 final class Enum_Test extends TestCase
 {
     use ProphecyTrait;
@@ -59,23 +55,17 @@ final class Enum_Test extends TestCase
         $this->fixture = new Enum_($this->docblockFactory->reveal());
     }
 
-    /**
-     * @covers ::matches
-     */
     public function testMatches(): void
     {
         self::assertFalse($this->fixture->matches(self::createContext(null), new stdClass()));
         self::assertTrue(
             $this->fixture->matches(
                 self::createContext(null),
-                $this->prophesize(EnumNode::class)->reveal()
-            )
+                $this->prophesize(EnumNode::class)->reveal(),
+            ),
         );
     }
 
-    /**
-     * @covers ::create
-     */
     public function testSimpleCreate(): void
     {
         $containerMock = m::mock(StrategyContainer::class);
@@ -88,9 +78,6 @@ final class Enum_Test extends TestCase
         self::assertEquals('\Space\MyEnum', (string) $result->getFqsen());
     }
 
-    /**
-     * @covers ::create
-     */
     public function testBackedEnumTypeIsSet(): void
     {
         $containerMock = m::mock(StrategyContainer::class);
@@ -105,9 +92,6 @@ final class Enum_Test extends TestCase
         self::assertEquals(new String_(), $result->getBackedType());
     }
 
-    /**
-     * @covers ::create
-     */
     public function testClassImplementingInterface(): void
     {
         $containerMock = m::mock(StrategyContainer::class);
@@ -125,13 +109,10 @@ final class Enum_Test extends TestCase
 
         self::assertEquals(
             ['\MyInterface' => new Fqsen('\MyInterface')],
-            $result->getInterfaces()
+            $result->getInterfaces(),
         );
     }
 
-    /**
-     * @covers ::create
-     */
     public function testIteratesStatements(): void
     {
         $method1           = new ClassMethod('MyEnum::method1');
@@ -150,7 +131,7 @@ final class Enum_Test extends TestCase
 
         $containerMock->findMatching(
             Argument::type(ContextStack::class),
-            $method1
+            $method1,
         )->willReturn($strategyMock->reveal());
 
         $result = $this->performCreate($enumMock, $containerMock->reveal());
@@ -159,13 +140,10 @@ final class Enum_Test extends TestCase
         self::assertEquals('\Space\MyEnum', (string) $result->getFqsen());
         self::assertEquals(
             ['\MyEnum::method1' => $method1Descriptor],
-            $result->getMethods()
+            $result->getMethods(),
         );
     }
 
-    /**
-     * @covers ::create
-     */
     public function testCreateWithDocBlock(): void
     {
         $doc       = new Doc('Text');
@@ -180,12 +158,10 @@ final class Enum_Test extends TestCase
         self::assertSame($docBlock, $result->getDocBlock());
     }
 
-    /**
-     * @return m\MockInterface|ClassNode
-     */
-    private function buildEnumMock()
+    private function buildEnumMock(): m\MockInterface|ClassNode
     {
         $enumMock = m::mock(EnumNode::class);
+        $enumMock->scalarType = null;
         $enumMock->shouldReceive('getAttribute')->andReturn(new Fqsen('\Space\MyEnum'));
         $enumMock->implements = [];
         $enumMock->stmts = [];

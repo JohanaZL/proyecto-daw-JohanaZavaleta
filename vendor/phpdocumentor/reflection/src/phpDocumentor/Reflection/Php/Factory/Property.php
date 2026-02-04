@@ -13,14 +13,14 @@ declare(strict_types=1);
 
 namespace phpDocumentor\Reflection\Php\Factory;
 
+use Override;
 use phpDocumentor\Reflection\DocBlockFactoryInterface;
 use phpDocumentor\Reflection\Location;
 use phpDocumentor\Reflection\Php\Class_;
-use phpDocumentor\Reflection\Php\ProjectFactoryStrategy;
+use phpDocumentor\Reflection\Php\Factory\Reducer\Reducer;
 use phpDocumentor\Reflection\Php\Property as PropertyDescriptor;
 use phpDocumentor\Reflection\Php\StrategyContainer;
 use phpDocumentor\Reflection\Php\Trait_;
-use phpDocumentor\Reflection\Php\Visibility;
 use PhpParser\Node\Stmt\Property as PropertyNode;
 use PhpParser\PrettyPrinter\Standard as PrettyPrinter;
 use Webmozart\Assert\Assert;
@@ -31,19 +31,18 @@ use Webmozart\Assert\Assert;
  * @see PropertyDescriptor
  * @see PropertyIterator
  */
-final class Property extends AbstractFactory implements ProjectFactoryStrategy
+final class Property extends AbstractFactory
 {
-    private PrettyPrinter $valueConverter;
-
-    /**
-     * Initializes the object.
-     */
-    public function __construct(DocBlockFactoryInterface $docBlockFactory, PrettyPrinter $prettyPrinter)
-    {
-        $this->valueConverter = $prettyPrinter;
-        parent::__construct($docBlockFactory);
+    /** @param iterable<Reducer> $reducers */
+    public function __construct(
+        DocBlockFactoryInterface $docBlockFactory,
+        private readonly PrettyPrinter $valueConverter,
+        iterable $reducers = [],
+    ) {
+        parent::__construct($docBlockFactory, $reducers);
     }
 
+    #[Override]
     public function matches(ContextStack $context, object $object): bool
     {
         return $object instanceof PropertyNode;
@@ -58,56 +57,52 @@ final class Property extends AbstractFactory implements ProjectFactoryStrategy
      * @param ContextStack $context used to convert nested objects.
      * @param PropertyNode $object
      */
+    #[Override]
     protected function doCreate(
         ContextStack $context,
         object $object,
-        StrategyContainer $strategies
-    ): void {
+        StrategyContainer $strategies,
+    ): object|null {
         $propertyContainer = $context->peek();
         Assert::isInstanceOfAny(
             $propertyContainer,
             [
                 Class_::class,
                 Trait_::class,
-            ]
+            ],
         );
 
         $iterator = new PropertyIterator($object);
         foreach ($iterator as $stmt) {
-            $default = null;
-            if ($iterator->getDefault() !== null) {
-                $default = $this->valueConverter->prettyPrintExpr($iterator->getDefault());
+            $property = PropertyBuilder::create(
+                $this->valueConverter,
+                $this->docBlockFactory,
+                $strategies,
+                $this->reducers,
+            )
+                ->fqsen($stmt->getFqsen())
+                ->visibility($stmt)
+                ->type($stmt->getType())
+                ->docblock($stmt->getDocComment())
+                ->default($stmt->getDefault())
+                ->static($stmt->isStatic())
+                ->startLocation(new Location($stmt->getLine()))
+                ->endLocation(new Location($stmt->getEndLine()))
+                ->readOnly($stmt->isReadonly())
+                ->hooks($stmt->getHooks())
+                ->build($context);
+
+            foreach ($this->reducers as $reducer) {
+                $property = $reducer->reduce($context, $object, $strategies, $property);
             }
 
-            $propertyContainer->addProperty(
-                new PropertyDescriptor(
-                    $stmt->getFqsen(),
-                    $this->buildVisibility($stmt),
-                    $this->createDocBlock($stmt->getDocComment(), $context->getTypeContext()),
-                    $default,
-                    $stmt->isStatic(),
-                    new Location($stmt->getLine()),
-                    new Location($stmt->getEndLine()),
-                    (new Type())->fromPhpParser($stmt->getType()),
-                    $stmt->isReadonly()
-                )
-            );
-        }
-    }
+            if ($property === null) {
+                continue;
+            }
 
-    /**
-     * Converts the visibility of the property to a valid Visibility object.
-     */
-    private function buildVisibility(PropertyIterator $node): Visibility
-    {
-        if ($node->isPrivate()) {
-            return new Visibility(Visibility::PRIVATE_);
+            $propertyContainer->addProperty($property);
         }
 
-        if ($node->isProtected()) {
-            return new Visibility(Visibility::PROTECTED_);
-        }
-
-        return new Visibility(Visibility::PUBLIC_);
+        return null;
     }
 }

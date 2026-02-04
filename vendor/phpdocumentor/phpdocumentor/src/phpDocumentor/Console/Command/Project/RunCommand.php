@@ -13,10 +13,9 @@ declare(strict_types=1);
 
 namespace phpDocumentor\Console\Command\Project;
 
-use League\Pipeline\PipelineInterface;
 use phpDocumentor\Descriptor\ProjectDescriptorBuilder;
-use phpDocumentor\Event\Dispatcher;
 use phpDocumentor\Parser\Event\PreParsingEvent;
+use phpDocumentor\Pipeline\PipelineInterface;
 use phpDocumentor\Transformer\Event\PreTransformEvent;
 use phpDocumentor\Transformer\Transformer;
 use Symfony\Component\Console\Command\Command;
@@ -25,6 +24,9 @@ use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Style\OutputStyle;
+use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\Stopwatch\Stopwatch;
 use Symfony\Component\Stopwatch\StopwatchEvent;
 
@@ -56,11 +58,10 @@ class RunCommand extends Command
 {
     private ProgressBar|null $progressBar = null;
 
-    private ProgressBar|null $transformerProgressBar = null;
-
     public function __construct(
         private readonly ProjectDescriptorBuilder $projectDescriptorBuilder,
         private readonly PipelineInterface $pipeline,
+        private readonly EventDispatcher $eventDispatcher,
     ) {
         parent::__construct('project:run');
     }
@@ -246,6 +247,12 @@ HELP,
                 null,
                 InputOption::VALUE_NONE,
                 'Whether to parse DocBlocks marked with @internal tag',
+            )
+            ->addOption(
+                'progress',
+                null,
+                InputOption::VALUE_NONE | InputOption::VALUE_NEGATABLE,
+                'Enable the progress bar',
             );
 
         parent::configure();
@@ -259,6 +266,8 @@ HELP,
         $stopwatch = new Stopwatch();
         $event = $stopwatch->start('all');
 
+        $io = new SymfonyStyle($input, $output);
+
         $output->writeln('phpDocumentor ' . $this->getApplication()->getVersion());
         $output->writeln('');
 
@@ -267,7 +276,7 @@ HELP,
                 ->run(new ArrayInput([]), $output);
         }
 
-        $this->observeProgressToShowProgressBars($output);
+        $this->observeProgressToShowProgressBars($input, $io);
 
         $pipeLine = $this->pipeline;
         $pipeLine($input->getOptions());
@@ -288,7 +297,7 @@ HELP,
         return 0;
     }
 
-    private function observeProgressToShowProgressBars(OutputInterface $output): void
+    private function observeProgressToShowProgressBars(InputInterface $input, OutputStyle $output): void
     {
         // Code that is poorly testable and not worth the effort
         // @codeCoverageIgnoreStart
@@ -296,39 +305,50 @@ HELP,
             return;
         }
 
-        $dispatcherInstance = Dispatcher::getInstance();
-        $dispatcherInstance->addListener(
-            'parser.pre',
-            function (PreParsingEvent $event) use ($output): void {
-                $output->writeln('Parsing files');
-                $this->progressBar = new ProgressBar($output, $event->getFileCount());
-            },
-        );
-        $dispatcherInstance->addListener(
-            'parser.file.pre',
-            function (): void {
-                $this->progressBar->advance();
+        $this->eventDispatcher->addListener(
+            PreParsingEvent::class,
+            function (PreParsingEvent $event) use ($input, $output): void {
+                $output->writeln('Parsing source files');
+                if ($input->getOption('progress') !== null && $input->getOption('progress') !== true) {
+                    return;
+                }
+
+                $this->progressBar = $output->createProgressBar($event->getFileCount());
+                $this->progressBar->start();
             },
         );
 
-        $dispatcherInstance->addListener(
+        if ($input->getOption('progress') === null || $input->getOption('progress') === true) {
+            $this->eventDispatcher->addListener(
+                'parser.file.pre',
+                function (): void {
+                    $this->progressBar->advance();
+                },
+            );
+        }
+
+        $this->eventDispatcher->addListener(
             Transformer::EVENT_PRE_TRANSFORM,
-            function (PreTransformEvent $event) use ($output): void {
+            function (PreTransformEvent $event) use ($input, $output): void {
                 $output->writeln('');
                 $output->writeln('Applying transformations (can take a while)');
-                $this->transformerProgressBar = new ProgressBar(
-                    $output,
-                    count($event->getTransformations()),
-                );
+                if ($input->getOption('progress') !== null && $input->getOption('progress') !== true) {
+                    return;
+                }
+
+                $this->progressBar = $output->createProgressBar(count($event->getTransformations()));
+                $this->progressBar->start();
             },
         );
 
-        $dispatcherInstance->addListener(
-            Transformer::EVENT_POST_TRANSFORMATION,
-            function (): void {
-                $this->transformerProgressBar->advance();
-            },
-        );
+        if ($input->getOption('progress') === null || $input->getOption('progress') === true) {
+            $this->eventDispatcher->addListener(
+                Transformer::EVENT_POST_TRANSFORMATION,
+                function (): void {
+                    $this->progressBar->advance();
+                },
+            );
+        }
         // @codeCoverageIgnoreEnd
     }
 

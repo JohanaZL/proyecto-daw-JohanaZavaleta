@@ -15,42 +15,42 @@ namespace phpDocumentor\Guides;
 
 use Exception;
 use League\Flysystem\FilesystemInterface;
+use LogicException;
+use phpDocumentor\FileSystem\FileSystem;
 use phpDocumentor\Guides\Nodes\DocumentNode;
 use phpDocumentor\Guides\Nodes\DocumentTree\DocumentEntryNode;
 use phpDocumentor\Guides\Nodes\Node;
 use phpDocumentor\Guides\Nodes\ProjectNode;
 
 use function dirname;
-use function trim;
 
 class RenderContext
 {
-    private string $destinationPath;
-
     private DocumentNode $document;
     /** @var DocumentNode[] */
     private array $allDocuments;
 
+    private string $outputFilePath = '';
+
+    private Renderer\DocumentListIterator $iterator;
+
     private function __construct(
-        private readonly string $outputFolder,
-        private readonly string $currentFileName,
-        private readonly FilesystemInterface $origin,
-        private readonly FilesystemInterface $destination,
-        private readonly UrlGeneratorInterface $urlGenerator,
+        private readonly string $destinationPath,
+        private readonly string|null $currentFileName,
+        private readonly FilesystemInterface|FileSystem $origin,
+        private readonly FilesystemInterface|FileSystem $destination,
         private readonly string $outputFormat,
         private readonly ProjectNode $projectNode,
     ) {
-        $this->destinationPath = trim($outputFolder, '/');
     }
 
     /** @param DocumentNode[] $allDocumentNodes */
     public static function forDocument(
         DocumentNode $documentNode,
         array $allDocumentNodes,
-        FilesystemInterface $origin,
-        FilesystemInterface $destination,
+        FilesystemInterface|FileSystem $origin,
+        FilesystemInterface|FileSystem $destination,
         string $destinationPath,
-        UrlGeneratorInterface $urlGenerator,
         string $ouputFormat,
         ProjectNode $projectNode,
     ): self {
@@ -59,12 +59,67 @@ class RenderContext
             $documentNode->getFilePath(),
             $origin,
             $destination,
-            $urlGenerator,
             $ouputFormat,
             $projectNode,
         );
 
         $self->document = $documentNode;
+        $self->allDocuments = $allDocumentNodes;
+        $self->outputFilePath =  $documentNode->getFilePath() . '.' . $ouputFormat;
+
+        return $self;
+    }
+
+    public function withDocument(DocumentNode $documentNode): self
+    {
+        return self::forDocument(
+            $documentNode,
+            $this->allDocuments,
+            $this->origin,
+            $this->destination,
+            $this->destinationPath,
+            $this->outputFormat,
+            $this->projectNode,
+        )->withIterator($this->getIterator());
+    }
+
+    public function getDocument(): DocumentNode
+    {
+        return $this->document;
+    }
+
+    /** @return DocumentNode[] */
+    public function getAllDocuments(): array
+    {
+        return $this->allDocuments;
+    }
+
+    public function withIterator(Renderer\DocumentListIterator $iterator): self
+    {
+        $that = clone $this;
+        $that->iterator = $iterator;
+
+        return $that;
+    }
+
+    /** @param DocumentNode[] $allDocumentNodes */
+    public static function forProject(
+        ProjectNode $projectNode,
+        array $allDocumentNodes,
+        FilesystemInterface|FileSystem $origin,
+        FilesystemInterface|FileSystem $destination,
+        string $destinationPath,
+        string $ouputFormat,
+    ): self {
+        $self = new self(
+            $destinationPath,
+            null,
+            $origin,
+            $destination,
+            $ouputFormat,
+            $projectNode,
+        );
+
         $self->allDocuments = $allDocumentNodes;
 
         return $self;
@@ -89,33 +144,9 @@ class RenderContext
         return $link ?? '';
     }
 
-    public function canonicalUrl(string $url): string
+    public function getDirName(): string
     {
-        return $this->urlGenerator->canonicalUrl($this->getDirName(), $url);
-    }
-
-    /**
-     * Generate a canonical output URL with the configured file extension and anchor
-     */
-    public function generateCanonicalOutputUrl(string $linkedDocument, string|null $anchor = null): string
-    {
-        if ($this->projectNode->findDocumentEntry($linkedDocument) !== null) {
-            // todo: this is a hack, existing documents are expected to be handled like absolute links in some places
-            $linkedDocument = '/' . $linkedDocument;
-        }
-
-        return $this->urlGenerator->generateOutputUrlFromDocumentPath(
-            $this->getDirName(),
-            $this->outputFolder,
-            $linkedDocument,
-            $this->outputFormat,
-            $anchor,
-        );
-    }
-
-    private function getDirName(): string
-    {
-        $dirname = dirname($this->currentFileName);
+        $dirname = dirname($this->outputFilePath);
 
         if ($dirname === '.') {
             return '';
@@ -124,12 +155,39 @@ class RenderContext
         return $dirname;
     }
 
+    public function hasCurrentFileName(): bool
+    {
+        return $this->currentFileName !== null;
+    }
+
     public function getCurrentFileName(): string
     {
+        if ($this->currentFileName === null) {
+            throw new LogicException('Cannot get current file name when not rendering a document');
+        }
+
         return $this->currentFileName;
     }
 
-    /** @return array<string, string> */
+    /** @return string[] */
+    public function getCurrentFileRootline(): array
+    {
+        if ($this->getCurrentDocumentEntry() === null) {
+            throw new LogicException('Cannot get current document entry when not rendering a document');
+        }
+
+        $rootline = [];
+        $documentEntry = $this->getCurrentDocumentEntry();
+        $rootline[] = $documentEntry->getFile();
+        while ($documentEntry->getParent() instanceof DocumentEntryNode) {
+            $documentEntry = $documentEntry->getParent();
+            $rootline[] = $documentEntry->getFile();
+        }
+
+        return $rootline;
+    }
+
+    /** @return array<string, string|null> */
     public function getLoggerInformation(): array
     {
         return [
@@ -137,14 +195,14 @@ class RenderContext
         ];
     }
 
-    public function getOrigin(): FilesystemInterface
+    public function getOrigin(): FilesystemInterface|FileSystem
     {
         return $this->origin;
     }
 
     public function getCurrentDocumentEntry(): DocumentEntryNode|null
     {
-        return $this->projectNode->findDocumentEntry($this->currentFileName);
+        return $this->projectNode->findDocumentEntry($this->getCurrentFileName());
     }
 
     public function getDestinationPath(): string
@@ -152,19 +210,9 @@ class RenderContext
         return $this->destinationPath;
     }
 
-    public function setDestinationPath(string $path): void
-    {
-        $this->destinationPath = $path;
-    }
-
-    public function getDestination(): FilesystemInterface
+    public function getDestination(): FilesystemInterface|FileSystem
     {
         return $this->destination;
-    }
-
-    public function getCurrentFileDestination(): string
-    {
-        return $this->destinationPath . '/' . $this->currentFileName . '.' . $this->outputFormat;
     }
 
     public function getProjectNode(): ProjectNode
@@ -186,5 +234,28 @@ class RenderContext
     public function getRootDocumentNode(): DocumentNode
     {
         return $this->getDocumentNodeForEntry($this->getProjectNode()->getRootDocumentEntry());
+    }
+
+    public function getOutputFormat(): string
+    {
+        return $this->outputFormat;
+    }
+
+    public function getIterator(): Renderer\DocumentListIterator
+    {
+        return $this->iterator;
+    }
+
+    public function getOutputFilePath(): string
+    {
+        return $this->outputFilePath;
+    }
+
+    public function withOutputFilePath(string $outputFilePath): RenderContext
+    {
+        $that = clone$this;
+        $that->outputFilePath = $outputFilePath;
+
+        return $that;
     }
 }

@@ -16,7 +16,6 @@ namespace phpDocumentor\Pipeline\Stage;
 use Exception;
 use League\Flysystem\FilesystemInterface;
 use phpDocumentor\Dsn;
-use phpDocumentor\Event\Dispatcher;
 use phpDocumentor\Parser\FlySystemFactory;
 use phpDocumentor\Transformer\Event\PostTransformEvent;
 use phpDocumentor\Transformer\Event\PreTransformationEvent;
@@ -26,6 +25,7 @@ use phpDocumentor\Transformer\Template\Factory;
 use phpDocumentor\Transformer\Transformer;
 use phpDocumentor\Transformer\Writer\WriterAbstract;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\Filesystem\Filesystem;
 use Webmozart\Assert\Assert;
 
@@ -57,6 +57,7 @@ class Transform
         private readonly FlySystemFactory $flySystemFactory,
         private readonly LoggerInterface $logger,
         private readonly Factory $templateFactory,
+        private readonly EventDispatcher $eventDispatcher,
     ) {
         $this->connectOutputToEvents();
     }
@@ -79,32 +80,28 @@ class Transform
         $project = $payload->getBuilder()->getProjectDescriptor();
         $transformations = $templates->getTransformations();
 
+        /** @var PreTransformEvent $preTransformEvent */
+        $preTransformEvent = PreTransformEvent::createInstance($this);
+        $preTransformEvent->setProject($project);
+        $preTransformEvent->setTransformations($transformations);
+        $this->eventDispatcher->dispatch(
+            $preTransformEvent,
+            Transformer::EVENT_PRE_TRANSFORM,
+        );
+
         foreach ($project->getVersions() as $version) {
             $documentationSets = $version->getDocumentationSets();
             foreach ($documentationSets as $documentationSet) {
-                /** @var PreTransformEvent $preTransformEvent */
-                $preTransformEvent = PreTransformEvent::createInstance($this);
-                $preTransformEvent->setProject($project);
-                $preTransformEvent->setTransformations($transformations);
-                Dispatcher::getInstance()->dispatch(
-                    $preTransformEvent,
-                    Transformer::EVENT_PRE_TRANSFORM,
-                );
-
-                $this->transformer->execute(
-                    $project,
-                    $documentationSet,
-                    $transformations,
-                );
-
-                /** @var PostTransformEvent $postTransformEvent */
-                $postTransformEvent = PostTransformEvent::createInstance($this);
-                $postTransformEvent->setProject($project);
-                $postTransformEvent->setTransformations($transformations);
-
-                Dispatcher::getInstance()->dispatch($postTransformEvent, Transformer::EVENT_POST_TRANSFORM);
+                $this->transformer->execute($project, $documentationSet, $transformations);
             }
         }
+
+        /** @var PostTransformEvent $postTransformEvent */
+        $postTransformEvent = PostTransformEvent::createInstance($this);
+        $postTransformEvent->setProject($project);
+        $postTransformEvent->setTransformations($transformations);
+
+        $this->eventDispatcher->dispatch($postTransformEvent, Transformer::EVENT_POST_TRANSFORM);
 
         return $payload;
     }
@@ -114,15 +111,14 @@ class Transform
      */
     private function connectOutputToEvents(): void
     {
-        $dispatcherInstance = Dispatcher::getInstance();
-        $dispatcherInstance->addListener(
+        $this->eventDispatcher->addListener(
             Transformer::EVENT_PRE_TRANSFORM,
             function (PreTransformEvent $event): void {
                 $transformations = $event->getTransformations();
                 $this->logger->info(sprintf("\nApplying %d transformations", count($transformations)));
             },
         );
-        $dispatcherInstance->addListener(
+        $this->eventDispatcher->addListener(
             Transformer::EVENT_PRE_INITIALIZATION,
             function (WriterInitializationEvent $event): void {
                 if (! ($event->getWriter() instanceof WriterAbstract)) {
@@ -132,7 +128,7 @@ class Transform
                 $this->logger->info('  Initialize writer "' . $event->getWriter()::class . '"');
             },
         );
-        $dispatcherInstance->addListener(
+        $this->eventDispatcher->addListener(
             Transformer::EVENT_PRE_TRANSFORMATION,
             function (PreTransformationEvent $event): void {
                 $this->logger->info(
@@ -150,12 +146,6 @@ class Transform
             $target = getcwd() . DIRECTORY_SEPARATOR . $target;
         }
 
-        $destination = $this->flySystemFactory->create(Dsn::createFromString((string) $target));
-
-        //TODO: the guides to need this, can we get rid of these lines?
-        $this->transformer->setTarget((string) $target);
-        $this->transformer->setDestination($destination);
-
-        return $destination;
+        return $this->flySystemFactory->create(Dsn::createFromString((string) $target));
     }
 }

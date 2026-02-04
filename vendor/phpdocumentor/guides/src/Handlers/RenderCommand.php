@@ -2,27 +2,40 @@
 
 declare(strict_types=1);
 
+/**
+ * This file is part of phpDocumentor.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @link https://phpdoc.org
+ */
+
 namespace phpDocumentor\Guides\Handlers;
 
 use League\Flysystem\FilesystemInterface;
+use phpDocumentor\FileSystem\FileSystem;
 use phpDocumentor\Guides\Nodes\DocumentNode;
 use phpDocumentor\Guides\Nodes\ProjectNode;
+use phpDocumentor\Guides\Renderer\DocumentListIterator;
 
 final class RenderCommand
 {
-    /**
-     * @param DocumentNode[] $documentArray
-     * @param iterable<DocumentNode> $documentIterator
-     */
+    private DocumentListIterator $documentIterator;
+
+    /** @param DocumentNode[] $documentArray */
     public function __construct(
         private readonly string $outputFormat,
         private readonly array $documentArray,
-        private readonly iterable $documentIterator,
-        private readonly FilesystemInterface $origin,
-        private readonly FilesystemInterface $destination,
+        private readonly FilesystemInterface|FileSystem $origin,
+        private readonly FilesystemInterface|FileSystem $destination,
         private readonly ProjectNode $projectNode,
         private readonly string $destinationPath = '/',
     ) {
+        $this->documentIterator = DocumentListIterator::create(
+            $this->projectNode->getRootDocumentEntry(),
+            $this->documentArray,
+        );
     }
 
     public function getOutputFormat(): string
@@ -36,18 +49,17 @@ final class RenderCommand
         return $this->documentArray;
     }
 
-    /** @return iterable<DocumentNode> $documentIterator */
-    public function getDocumentIterator(): iterable
+    public function getDocumentIterator(): DocumentListIterator
     {
         return $this->documentIterator;
     }
 
-    public function getOrigin(): FilesystemInterface
+    public function getOrigin(): FilesystemInterface|FileSystem
     {
         return $this->origin;
     }
 
-    public function getDestination(): FilesystemInterface
+    public function getDestination(): FilesystemInterface|FileSystem
     {
         return $this->destination;
     }

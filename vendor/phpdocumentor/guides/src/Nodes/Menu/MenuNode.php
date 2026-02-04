@@ -14,50 +14,60 @@ declare(strict_types=1);
 namespace phpDocumentor\Guides\Nodes\Menu;
 
 use phpDocumentor\Guides\Nodes\CompoundNode;
-use phpDocumentor\Guides\Nodes\Node;
+use phpDocumentor\Guides\Nodes\InlineCompoundNode;
 
 use const PHP_INT_MAX;
 
 /**
  * @link https://www.sphinx-doc.org/en/master/usage/restructuredtext/directives.html#table-of-contents
  *
- * @extends CompoundNode<Node>
+ * @extends CompoundNode<MenuEntryNode>
  */
 abstract class MenuNode extends CompoundNode
 {
+    private InlineCompoundNode|null $caption = null;
+    private bool $reversed = false;
     protected const DEFAULT_DEPTH = PHP_INT_MAX;
 
-    /** @var MenuEntryNode[] */
-    private array $menuEntries = [];
-
-    /** @param string[] $files */
-    public function __construct(private readonly array $files)
+    /** @param MenuEntryNode[] $menuEntries */
+    public function __construct(array $menuEntries)
     {
-        parent::__construct();
-    }
-
-    /** @return string[] */
-    public function getFiles(): array
-    {
-        return $this->files;
+        parent::__construct($menuEntries);
     }
 
     abstract public function getDepth(): int;
 
-    /** @param MenuEntryNode[] $menuEntries */
-    public function withMenuEntries(array $menuEntries): self
+    /** @return MenuEntryNode[] */
+    public function getMenuEntries(): array
+    {
+        return $this->value;
+    }
+
+    abstract public function isPageLevelOnly(): bool;
+
+    public function getCaption(): InlineCompoundNode|null
+    {
+        return $this->caption;
+    }
+
+    public function withCaption(InlineCompoundNode|null $caption): static
     {
         $that = clone $this;
-        $that->menuEntries = $menuEntries;
+        $that->caption = $caption;
 
         return $that;
     }
 
-    /** @return MenuEntryNode[] */
-    public function getMenuEntries(): array
+    public function isReversed(): bool
     {
-        return $this->menuEntries;
+        return $this->reversed;
     }
 
-    abstract public function isPageLevelOnly(): bool;
+    public function withReversed(bool $reversed): MenuNode
+    {
+        $that = clone $this;
+        $that->reversed = $reversed;
+
+        return $that;
+    }
 }

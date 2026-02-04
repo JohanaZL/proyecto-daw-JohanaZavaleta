@@ -20,8 +20,10 @@ use phpDocumentor\Guides\Nodes\Node;
 use phpDocumentor\Guides\RenderContext;
 use phpDocumentor\Guides\TemplateRenderer;
 
+use function is_a;
+
 /** @implements  NodeRenderer<TocNode> */
-class TocNodeRenderer implements NodeRenderer
+final class TocNodeRenderer implements NodeRenderer
 {
     public function __construct(private readonly TemplateRenderer $renderer)
     {
@@ -40,8 +42,8 @@ class TocNodeRenderer implements NodeRenderer
         );
     }
 
-    public function supports(Node $node): bool
+    public function supports(string $nodeFqcn): bool
     {
-        return $node instanceof TocNode;
+        return $nodeFqcn === TocNode::class || is_a($nodeFqcn, TocNode::class, true);
     }
 }

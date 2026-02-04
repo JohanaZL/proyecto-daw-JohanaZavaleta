@@ -16,11 +16,19 @@ namespace phpDocumentor\Descriptor\Interfaces;
 use phpDocumentor\Descriptor\Collection;
 use phpDocumentor\Descriptor\IsTyped;
 use phpDocumentor\Descriptor\Tag\VarDescriptor;
+use phpDocumentor\Descriptor\ValueObjects\Visibility;
+use phpDocumentor\Reflection\Php\Expression;
 
 /**
  * Descriptor representing a property on a class or trait.
  */
-interface PropertyInterface extends ElementInterface, TypeInterface, ChildInterface, IsTyped
+interface PropertyInterface extends
+    ElementInterface,
+    TypeInterface,
+    ChildInterface,
+    IsTyped,
+    AttributedInterface,
+    VisibilityInterface
 {
     /**
      * Returns true when this property is intended to be read-only.
@@ -39,12 +47,12 @@ interface PropertyInterface extends ElementInterface, TypeInterface, ChildInterf
     /**
      * Stores a textual representation of the default value for a property.
      */
-    public function setDefault(string $value): void;
+    public function setDefault(Expression $value): void;
 
     /**
      * Returns the textual representation of the default value for a property, or null if none is provided.
      */
-    public function getDefault(): string|null;
+    public function getDefault(): Expression|null;
 
     /**
      * Sets whether this property is static in scope.
@@ -58,11 +66,12 @@ interface PropertyInterface extends ElementInterface, TypeInterface, ChildInterf
 
     /**
      * Sets whether this property is available from inside or outside its class and/or descendants.
-     *
-     * @param string $visibility May be either 'public', 'private' or 'protected'.
      */
-    public function setVisibility(string $visibility): void;
+    public function setVisibility(Visibility $visibility): void;
 
     /** @return Collection<VarDescriptor> */
     public function getVar(): Collection;
+
+    /** @return Collection<PropertyHookInterface> */
+    public function getHooks(): Collection;
 }

@@ -14,26 +14,26 @@ declare(strict_types=1);
 namespace phpDocumentor\Reflection\Php\Factory;
 
 use InvalidArgumentException;
+use Override;
 use phpDocumentor\Reflection\DocBlock;
 use phpDocumentor\Reflection\DocBlockFactoryInterface;
+use phpDocumentor\Reflection\Php\Factory\Reducer\Reducer;
 use phpDocumentor\Reflection\Php\ProjectFactoryStrategy;
 use phpDocumentor\Reflection\Php\StrategyContainer;
 use phpDocumentor\Reflection\Types\Context;
 use PhpParser\Comment\Doc;
 use PhpParser\NodeAbstract;
 
-use function get_class;
-use function gettype;
-use function is_object;
+use function get_debug_type;
 use function sprintf;
 
 abstract class AbstractFactory implements ProjectFactoryStrategy
 {
-    private DocBlockFactoryInterface $docBlockFactory;
-
-    public function __construct(DocBlockFactoryInterface $docBlockFactory)
-    {
-        $this->docBlockFactory = $docBlockFactory;
+    /** @param iterable<Reducer> $reducers */
+    public function __construct(
+        protected readonly DocBlockFactoryInterface $docBlockFactory,
+        protected readonly iterable $reducers = [],
+    ) {
     }
 
     /**
@@ -41,8 +41,10 @@ abstract class AbstractFactory implements ProjectFactoryStrategy
      *
      * @param object $object object to check.
      */
+    #[Override]
     abstract public function matches(ContextStack $context, object $object): bool;
 
+    #[Override]
     public function create(ContextStack $context, object $object, StrategyContainer $strategies): void
     {
         if (!$this->matches($context, $object)) {
@@ -50,12 +52,15 @@ abstract class AbstractFactory implements ProjectFactoryStrategy
                 sprintf(
                     '%s cannot handle objects with the type %s',
                     self::class,
-                    is_object($object) ? get_class($object) : gettype($object)
-                )
+                    get_debug_type($object),
+                ),
             );
         }
 
-        $this->doCreate($context, $object, $strategies);
+        $element = $this->doCreate($context, $object, $strategies);
+        foreach ($this->reducers as $reducer) {
+            $element = $reducer->reduce($context, $object, $strategies, $element);
+        }
     }
 
     /**
@@ -66,9 +71,9 @@ abstract class AbstractFactory implements ProjectFactoryStrategy
      *
      * @param NodeAbstract|object $object object to convert to an Element
      */
-    abstract protected function doCreate(ContextStack $context, object $object, StrategyContainer $strategies): void;
+    abstract protected function doCreate(ContextStack $context, object $object, StrategyContainer $strategies): object|null;
 
-    protected function createDocBlock(?Doc $docBlock = null, ?Context $context = null): ?DocBlock
+    protected function createDocBlock(Doc|null $docBlock = null, Context|null $context = null): DocBlock|null
     {
         if ($docBlock === null) {
             return null;

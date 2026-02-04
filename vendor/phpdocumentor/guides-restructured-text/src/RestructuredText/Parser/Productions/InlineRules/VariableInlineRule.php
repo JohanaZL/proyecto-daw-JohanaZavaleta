@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+/**
+ * This file is part of phpDocumentor.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @link https://phpdoc.org
+ */
+
 namespace phpDocumentor\Guides\RestructuredText\Parser\Productions\InlineRules;
 
 use phpDocumentor\Guides\Nodes\Inline\InlineNode;
@@ -12,7 +21,7 @@ use phpDocumentor\Guides\RestructuredText\Parser\InlineLexer;
 /**
  * Rule to parse for inline variables such as |replace_me|
  */
-class VariableInlineRule extends AbstractInlineRule
+final class VariableInlineRule extends AbstractInlineRule
 {
     public function applies(InlineLexer $lexer): bool
     {
@@ -38,8 +47,15 @@ class VariableInlineRule extends AbstractInlineRule
 
                     return new VariableInlineNode($text);
 
-                default:
+                case $token->type === InlineLexer::WORD:
+                case $token->type === InlineLexer::UNDERSCORE:
                     $text .= $token->value;
+                    break;
+
+                default:
+                    $this->rollback($lexer, $initialPosition ?? 0);
+
+                    return null;
             }
 
             if ($lexer->moveNext() === false && $lexer->token === null) {

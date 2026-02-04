@@ -13,16 +13,17 @@ declare(strict_types=1);
 
 namespace phpDocumentor\Reflection\Php\Factory;
 
+use Override;
 use phpDocumentor\Reflection\Location;
 use phpDocumentor\Reflection\Php\File as FileElement;
-use phpDocumentor\Reflection\Php\ProjectFactoryStrategy;
 use phpDocumentor\Reflection\Php\StrategyContainer;
 use phpDocumentor\Reflection\Php\Trait_ as TraitElement;
 use PhpParser\Node\Stmt\Trait_ as TraitNode;
 use Webmozart\Assert\Assert;
 
-final class Trait_ extends AbstractFactory implements ProjectFactoryStrategy
+final class Trait_ extends AbstractFactory
 {
+    #[Override]
     public function matches(ContextStack $context, object $object): bool
     {
         return $object instanceof TraitNode;
@@ -37,13 +38,14 @@ final class Trait_ extends AbstractFactory implements ProjectFactoryStrategy
      * @param ContextStack $context used to convert nested objects.
      * @param TraitNode $object
      */
-    protected function doCreate(ContextStack $context, object $object, StrategyContainer $strategies): void
+    #[Override]
+    protected function doCreate(ContextStack $context, object $object, StrategyContainer $strategies): object|null
     {
         $trait = new TraitElement(
             $object->getAttribute('fqsen'),
             $this->createDocBlock($object->getDocComment(), $context->getTypeContext()),
             new Location($object->getLine()),
-            new Location($object->getEndLine())
+            new Location($object->getEndLine()),
         );
 
         $file = $context->peek();
@@ -55,5 +57,7 @@ final class Trait_ extends AbstractFactory implements ProjectFactoryStrategy
             $strategy = $strategies->findMatching($thisContext, $stmt);
             $strategy->create($thisContext, $stmt, $strategies);
         }
+
+        return $trait;
     }
 }

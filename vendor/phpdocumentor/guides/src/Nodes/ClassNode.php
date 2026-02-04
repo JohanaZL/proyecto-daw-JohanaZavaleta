@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+/**
+ * This file is part of phpDocumentor.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @link https://phpdoc.org
+ */
+
 namespace phpDocumentor\Guides\Nodes;
 
 /**
@@ -13,7 +22,7 @@ namespace phpDocumentor\Guides\Nodes;
  */
 
 /** @extends AbstractNode<string> */
-class ClassNode extends AbstractNode
+final class ClassNode extends AbstractNode
 {
     public function __construct(string $value)
     {

@@ -11,27 +11,21 @@ use PhpParser\Node\Stmt\GroupUse;
 use PhpParser\Node\Stmt\Namespace_;
 use PhpParser\Node\Stmt\Use_ as UseStatement;
 use PhpParser\Node\Stmt\UseUse;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @coversDefaultClass \phpDocumentor\Reflection\Types\NamespaceNodeToContext
- * @covers ::<private>
- */
+#[CoversClass(NamespaceNodeToContext::class)]
 final class NamespaceNodeToContextTest extends TestCase
 {
-    /**
-     * @dataProvider expectedContextsProvider
-     * @covers ::__invoke
-     */
-    public function testConversion(?Namespace_ $namespace, Context $expectedContext): void
+    #[DataProvider('expectedContextsProvider')]
+    public function testConversion(Namespace_|null $namespace, Context $expectedContext): void
     {
         $this->assertEquals($expectedContext, (new NamespaceNodeToContext())->__invoke($namespace));
     }
 
-    /**
-     * @return (Namespace|Context|null)[][]
-     */
-    public function expectedContextsProvider(): array
+    /** @return (Namespace|Context|null)[][] */
+    public static function expectedContextsProvider(): array
     {
         $namespaceWithImports = new Namespace_(
             new Name('With\\Imports'),
@@ -51,11 +45,11 @@ final class NamespaceNodeToContextTest extends TestCase
                     [
                         new UseUse(new Name('MMM')),
                         new UseUse(new Name('NNN'), 'OOO'),
-                    ]
+                    ],
                 ),
                 (new Use_('\\PPP', UseStatement::TYPE_NORMAL))->getNode(),
                 new Class_('ClassNode'), // class node, should be ignored
-            ]
+            ],
         );
 
         return [
@@ -91,7 +85,7 @@ final class NamespaceNodeToContextTest extends TestCase
                         'MMM' => 'LLL\\MMM',
                         'OOO' => 'LLL\\NNN',
                         'PPP' => 'PPP',
-                    ]
+                    ],
                 ),
             ],
         ];

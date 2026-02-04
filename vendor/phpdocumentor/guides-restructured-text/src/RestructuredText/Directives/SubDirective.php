@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+/**
+ * This file is part of phpDocumentor.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @link https://phpdoc.org
+ */
+
 namespace phpDocumentor\Guides\RestructuredText\Directives;
 
 use phpDocumentor\Guides\Nodes\CollectionNode;
@@ -38,7 +47,7 @@ abstract class SubDirective extends BaseDirective
             return null;
         }
 
-        $node = $this->processSub($collectionNode, $directive);
+        $node = $this->processSub($blockContext, $collectionNode, $directive);
 
         if ($node === null) {
             return null;
@@ -54,6 +63,7 @@ abstract class SubDirective extends BaseDirective
     }
 
     protected function processSub(
+        BlockContext $blockContext,
         CollectionNode $collectionNode,
         Directive $directive,
     ): Node|null {

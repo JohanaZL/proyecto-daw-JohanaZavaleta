@@ -13,10 +13,12 @@ declare(strict_types=1);
 
 namespace phpDocumentor\Guides\RestructuredText\Parser;
 
+use function array_merge;
+
 /**
  * Our document parser contains
  */
-class BlockContext
+final class BlockContext
 {
     private readonly LinesIterator $documentIterator;
     
@@ -44,9 +46,14 @@ class BlockContext
     public function getLoggerInformation(): array
     {
         $info = [
-            'currentLine' => $this->documentIterator->current(),
-            'currentLineNumber' => $this->lineOffset + $this->documentIterator->key(),
+            'currentLineNumber' => $this->lineOffset + 1,
         ];
+        if ($this->documentIterator->valid()) {
+            $info = array_merge($info, [
+                'currentLine' => $this->documentIterator->current(),
+                'currentLineNumber' => $this->lineOffset + $this->documentIterator->key(),
+            ]);
+        }
 
         return [...$this->documentParserContext->getLoggerInformation(), ...$info];
     }

@@ -2,9 +2,18 @@
 
 declare(strict_types=1);
 
+/**
+ * This file is part of phpDocumentor.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @link https://phpdoc.org
+ */
+
 namespace phpDocumentor\Guides\Compiler\Passes;
 
-use phpDocumentor\Guides\Compiler\CompilerContext;
+use phpDocumentor\Guides\Compiler\CompilerContextInterface;
 use phpDocumentor\Guides\Compiler\CompilerPass;
 use phpDocumentor\Guides\Nodes\AnchorNode;
 use phpDocumentor\Guides\Nodes\CompoundNode;
@@ -26,7 +35,7 @@ use function prev;
  * This follows the reStructuredText rules as outlined in:
  * https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#implicit-hyperlink-targets
  */
-class ImplicitHyperlinkTargetPass implements CompilerPass
+final class ImplicitHyperlinkTargetPass implements CompilerPass
 {
     public function getPriority(): int
     {
@@ -34,7 +43,7 @@ class ImplicitHyperlinkTargetPass implements CompilerPass
     }
 
     /** {@inheritDoc} */
-    public function run(array $documents, CompilerContext $compilerContext): array
+    public function run(array $documents, CompilerContextInterface $compilerContext): array
     {
         return array_map(function (DocumentNode $document): DocumentNode {
             // implicit references must not conflict with explicit ones

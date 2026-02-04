@@ -6,11 +6,15 @@ namespace integration;
 
 use phpDocumentor\Reflection\File\LocalFile;
 use phpDocumentor\Reflection\Php\ProjectFactory;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Integration tests to check the correct working of processing a namespace into a project.
+ *
+ * @coversNothing
  */
+#[CoversNothing]
 final class FileDocblockTest extends TestCase
 {
     /** @var ProjectFactory */
@@ -37,7 +41,7 @@ final class FileDocblockTest extends TestCase
         );
     }
 
-    public function fileProvider() : array
+    public static function fileProvider() : array
     {
         return [
             [ __DIR__ . '/data/GlobalFiles/empty.php' ],
@@ -48,10 +52,6 @@ final class FileDocblockTest extends TestCase
         ];
     }
 
-    /**
-     * @covers \phpDocumentor\Reflection\Php\Factory\File::create
-     * @covers \phpDocumentor\Reflection\Php\Factory\File::<private>
-     */
     public function testConditionalFunctionDefine() : void
     {
         $fileName =  __DIR__ . '/data/GlobalFiles/conditional_function.php';
@@ -66,10 +66,6 @@ final class FileDocblockTest extends TestCase
         );
     }
 
-    /**
-     * @covers \phpDocumentor\Reflection\Php\Factory\File::create
-     * @covers \phpDocumentor\Reflection\Php\Factory\File::<private>
-     */
     public function testGlobalNamespacedFunctionDefine() : void
     {
         $fileName =  __DIR__ . '/data/GlobalFiles/global_namspaced_function.php';
@@ -84,10 +80,6 @@ final class FileDocblockTest extends TestCase
         );
     }
 
-    /**
-     * @covers \phpDocumentor\Reflection\Php\Factory\File::create
-     * @covers \phpDocumentor\Reflection\Php\Factory\File::<private>
-     */
     public function testFileWithInlineFunction() : void
     {
         $fileName =  __DIR__ . '/data/GlobalFiles/inline_function.php';

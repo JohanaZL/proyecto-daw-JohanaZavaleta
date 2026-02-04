@@ -2,17 +2,23 @@ services:
   _defaults:
     autowire: true
     autoconfigure: true
+    bind:
+      $reducers: !tagged_iterator phpdoc.reflection.reducer
+
   _instanceof:
     phpDocumentor\Reflection\Php\ProjectFactoryStrategy:
       tags: ['phpdoc.reflection.strategy']
+    phpDocumentor\Reflection\Php\Factory\Reducer\Reducer:
+      tags: ['phpdoc.reflection.reducer']
 
   phpDocumentor\Reflection\Php\:
-    resource: '%kernel.project_dir%/vendor/phpdocumentor/reflection/src/phpDocumentor/Reflection/Php'
+    resource: '%vendor_dir%/phpdocumentor/reflection/src/phpDocumentor/Reflection/Php'
 
   phpDocumentor\Reflection\Php\NodesFactory:
     class: phpDocumentor\Reflection\Php\NodesFactory
     factory: [ phpDocumentor\Reflection\Php\NodesFactory, 'createInstance' ]
 
+  phpDocumentor\Reflection\Php\Expression\ExpressionPrinter: ~
   phpDocumentor\Reflection\FqsenResolver: ~
   phpDocumentor\Reflection\DocBlock\TagFactory: '@phpDocumentor\Reflection\DocBlock\StandardTagFactory'
   phpDocumentor\Reflection\DocBlock\StandardTagFactory:
@@ -46,6 +52,10 @@ services:
     class: phpDocumentor\Reflection\Php\ProjectFactory
     arguments:
       $strategies: '@phpDocumentor\Reflection\Php\ProjectFactoryStrategies'
+
+  phpDocumentor\Reflection\Php\Factory\Reducer\Parameter:
+    arguments:
+      $valueConverter: '@phpDocumentor\Reflection\Php\Expression\ExpressionPrinter'
 
   phpDocumentor\Reflection\Php\ProjectFactoryStrategies:
     arguments:

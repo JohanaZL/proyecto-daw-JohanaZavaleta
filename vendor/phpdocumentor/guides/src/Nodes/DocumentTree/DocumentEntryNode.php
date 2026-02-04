@@ -2,25 +2,39 @@
 
 declare(strict_types=1);
 
+/**
+ * This file is part of phpDocumentor.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @link https://phpdoc.org
+ */
+
 namespace phpDocumentor\Guides\Nodes\DocumentTree;
 
-use phpDocumentor\Guides\Nodes\AbstractNode;
-use phpDocumentor\Guides\Nodes\DocumentNode;
+use phpDocumentor\Guides\Nodes\Node;
+use phpDocumentor\Guides\Nodes\SectionNode;
 use phpDocumentor\Guides\Nodes\TitleNode;
 
-/** @extends AbstractNode<DocumentNode> */
-final class DocumentEntryNode extends AbstractNode
+use function array_filter;
+use function array_values;
+
+/** @extends EntryNode<DocumentEntryNode|ExternalEntryNode> */
+final class DocumentEntryNode extends EntryNode
 {
-    /** @var DocumentEntryNode[] */
+    /** @var array<DocumentEntryNode|ExternalEntryNode> */
     private array $entries = [];
     /** @var SectionEntryNode[]  */
     private array $sections = [];
-    private DocumentEntryNode|null $parent = null;
 
+    /** @param array<string, Node> $additionalData */
     public function __construct(
         private readonly string $file,
         private readonly TitleNode $titleNode,
         private readonly bool $isRoot = false,
+        private array $additionalData = [],
+        private bool $orphan = false,
     ) {
     }
 
@@ -29,25 +43,33 @@ final class DocumentEntryNode extends AbstractNode
         return $this->titleNode;
     }
 
-    public function addChild(DocumentEntryNode $child): void
+    public function addChild(DocumentEntryNode|ExternalEntryNode $child): void
     {
         $this->entries[] = $child;
     }
 
-    /** @return DocumentEntryNode[] */
+    /** @return array<DocumentEntryNode> */
     public function getChildren(): array
+    {
+        // Filter the entries array to only include DocumentEntryNode instances
+        $documentEntries = array_filter($this->entries, static function ($entry) {
+            return $entry instanceof DocumentEntryNode;
+        });
+
+        // Re-index the array to maintain numeric keys
+        return array_values($documentEntries);
+    }
+
+    /** @return array<DocumentEntryNode|ExternalEntryNode> */
+    public function getMenuEntries(): array
     {
         return $this->entries;
     }
 
-    public function getParent(): DocumentEntryNode|null
+    /** @param array<DocumentEntryNode|ExternalEntryNode> $entries */
+    public function setMenuEntries(array $entries): void
     {
-        return $this->parent;
-    }
-
-    public function setParent(DocumentEntryNode|null $parent): void
-    {
-        $this->parent = $parent;
+        $this->entries = $entries;
     }
 
     /** @return SectionEntryNode[] */
@@ -69,5 +91,38 @@ final class DocumentEntryNode extends AbstractNode
     public function isRoot(): bool
     {
         return $this->isRoot;
+    }
+
+    public function findSectionEntry(SectionNode $sectionNode): SectionEntryNode|null
+    {
+        foreach ($this->sections as $sectionEntryNode) {
+            if ($sectionNode->getId() === $sectionEntryNode->getId()) {
+                return $sectionEntryNode;
+            }
+        }
+
+        foreach ($this->sections as $sectionEntryNode) {
+            $subsection = $sectionEntryNode->findSectionEntry($sectionNode);
+            if ($subsection !== null) {
+                return $subsection;
+            }
+        }
+
+        return null;
+    }
+
+    public function getAdditionalData(string $key): Node|null
+    {
+        return $this->additionalData[$key] ?? null;
+    }
+
+    public function isOrphan(): bool
+    {
+        return $this->orphan;
+    }
+
+    public function addAdditionalData(string $key, Node $value): void
+    {
+        $this->additionalData[$key] = $value;
     }
 }

@@ -7,7 +7,7 @@
             "ProyectoDAW\\": "php/"
         }
     },
-    "require": {
+    "require-dev": {
         "phpdocumentor/phpdocumentor": "^3.4"
     }
 }

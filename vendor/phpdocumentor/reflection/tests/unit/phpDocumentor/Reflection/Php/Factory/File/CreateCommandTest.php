@@ -17,15 +17,13 @@ use phpDocumentor\Reflection\File\LocalFile;
 use phpDocumentor\Reflection\Php\Factory\ContextStack;
 use phpDocumentor\Reflection\Php\Project;
 use phpDocumentor\Reflection\Php\ProjectFactoryStrategies;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @uses phpDocumentor\Reflection\File\LocalFile
- * @uses phpDocumentor\Reflection\Php\ProjectFactoryStrategies
- *
- * @coversDefaultClass phpDocumentor\Reflection\Php\Factory\File\CreateCommand
- * @covers ::__construct
- */
+#[CoversClass(CreateCommand::class)]
+#[UsesClass('phpDocumentor\Reflection\File\LocalFile')]
+#[UsesClass('phpDocumentor\Reflection\Php\ProjectFactoryStrategies')]
 class CreateCommandTest extends TestCase
 {
     private CreateCommand $fixture;
@@ -41,21 +39,15 @@ class CreateCommandTest extends TestCase
         $this->fixture    = new CreateCommand(
             new ContextStack(new Project('test')),
             $this->file,
-            $this->strategies
+            $this->strategies,
         );
     }
 
-    /**
-     * @covers ::getFile
-     */
     public function testGetFile(): void
     {
         $this->assertSame($this->file, $this->fixture->getFile());
     }
 
-    /**
-     * @covers ::getStrategies
-     */
     public function testGetStrategies(): void
     {
         $this->assertSame($this->strategies, $this->fixture->getStrategies());

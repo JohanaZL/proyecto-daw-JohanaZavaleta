@@ -14,25 +14,42 @@ declare(strict_types=1);
 namespace phpDocumentor\Guides\Graphs\Twig;
 
 use phpDocumentor\Guides\Graphs\Renderer\DiagramRenderer;
+use phpDocumentor\Guides\RenderContext;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
 
+use function assert;
+
 final class UmlExtension extends AbstractExtension
 {
-    public function __construct(private readonly DiagramRenderer $diagramRenderer)
+    private DiagramRenderer $diagramRenderer;
+
+    /** @param iterable<string, DiagramRenderer> $renderers */
+    public function __construct(iterable $renderers, string $rendererAlias)
     {
+        foreach ($renderers as $alias => $renderer) {
+            if ($alias !== $rendererAlias) {
+                continue;
+            }
+
+            $this->diagramRenderer = $renderer;
+        }
     }
 
     /** @return TwigFunction[] */
     public function getFunctions(): array
     {
         return [
-            new TwigFunction('uml', $this->uml(...), ['is_safe' => ['html']]),
+            new TwigFunction('uml', $this->uml(...), ['is_safe' => ['html'], 'needs_context' => true]),
         ];
     }
 
-    public function uml(string $source): string|null
+    /** @param array{env: RenderContext} $context */
+    public function uml(array $context, string $source): string|null
     {
-        return $this->diagramRenderer->render($source);
+        $renderContext = $context['env'];
+        assert($renderContext instanceof RenderContext);
+
+        return $this->diagramRenderer->render($renderContext, $source);
     }
 }

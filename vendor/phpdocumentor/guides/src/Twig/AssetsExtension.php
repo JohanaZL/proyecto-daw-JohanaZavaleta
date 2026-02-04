@@ -13,35 +13,41 @@ declare(strict_types=1);
 
 namespace phpDocumentor\Guides\Twig;
 
-use League\Flysystem\Exception;
-use LogicException;
+use League\Uri\BaseUri;
+use League\Uri\Uri;
 use phpDocumentor\Guides\Meta\InternalTarget;
 use phpDocumentor\Guides\Meta\Target;
 use phpDocumentor\Guides\NodeRenderers\NodeRenderer;
 use phpDocumentor\Guides\Nodes\BreadCrumbNode;
-use phpDocumentor\Guides\Nodes\CollectionNode;
-use phpDocumentor\Guides\Nodes\Menu\NavMenuNode;
 use phpDocumentor\Guides\Nodes\Node;
+use phpDocumentor\Guides\ReferenceResolvers\DocumentNameResolverInterface;
 use phpDocumentor\Guides\RenderContext;
-use phpDocumentor\Guides\UrlGeneratorInterface;
+use phpDocumentor\Guides\Renderer\UrlGenerator\UrlGeneratorInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use Stringable;
+use Throwable;
+use Twig\DeprecatedCallableInfo;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
 use Twig\TwigTest;
 
-use function count;
+use function class_exists;
 use function sprintf;
 use function trim;
 
 final class AssetsExtension extends AbstractExtension
 {
+    private GlobalMenuExtension $menuExtension;
+
     /** @param NodeRenderer<Node> $nodeRenderer */
     public function __construct(
         private readonly LoggerInterface $logger,
         private readonly NodeRenderer $nodeRenderer,
+        private readonly DocumentNameResolverInterface $documentNameResolver,
         private readonly UrlGeneratorInterface $urlGenerator,
     ) {
+        $this->menuExtension = new GlobalMenuExtension($this->nodeRenderer);
     }
 
     /** @return TwigFunction[] */
@@ -52,8 +58,13 @@ final class AssetsExtension extends AbstractExtension
             new TwigFunction('renderNode', $this->renderNode(...), ['is_safe' => ['html'], 'needs_context' => true]),
             new TwigFunction('renderLink', $this->renderLink(...), ['is_safe' => ['html'], 'needs_context' => true]),
             new TwigFunction('renderBreadcrumb', $this->renderBreadcrumb(...), ['is_safe' => ['html'], 'needs_context' => true]),
-            new TwigFunction('renderMenu', $this->renderMenu(...), ['is_safe' => ['html'], 'needs_context' => true]),
+            new TwigFunction(
+                'renderMenu',
+                $this->renderMenu(...),
+                ['is_safe' => ['html'], 'needs_context' => true] + (class_exists(DeprecatedCallableInfo::class) ? ['deprecation_info' => new DeprecatedCallableInfo('phpdocumentor/guides', '1.1.0', 'renderMenu" from "' . GlobalMenuExtension::class)] : ['deprecated' => true]),
+            ),
             new TwigFunction('renderTarget', $this->renderTarget(...), ['is_safe' => ['html'], 'needs_context' => true]),
+            new TwigFunction('renderOrderedListType', $this->renderOrderedListType(...), ['is_safe' => ['html'], 'needs_context' => false]),
         ];
     }
 
@@ -65,6 +76,10 @@ final class AssetsExtension extends AbstractExtension
                 'node',
                 /** @param mixed $value */
                 static fn (mixed $value): bool => $value instanceof Node,
+            ),
+            new TwigTest(
+                'external_target',
+                static fn (string|Stringable $value): bool => BaseUri::from(Uri::new($value))->isAbsolute(),
             ),
         ];
     }
@@ -82,8 +97,7 @@ final class AssetsExtension extends AbstractExtension
     {
         $outputPath = $this->copyAsset($context['env'] ?? null, $path);
 
-        // make it relative so it plays nice with the base tag in the HEAD
-        return trim($outputPath, '/');
+        return $this->urlGenerator->generateInternalUrl($context['env'] ?? null, trim($outputPath, '/'));
     }
 
     /**
@@ -114,7 +128,7 @@ final class AssetsExtension extends AbstractExtension
     public function renderTarget(array $context, Target $target): string
     {
         if ($target instanceof InternalTarget) {
-            return $this->getRenderContext($context)->generateCanonicalOutputUrl($target->getDocumentPath(), $target->getAnchor());
+            return $this->urlGenerator->generateCanonicalOutputUrl($this->getRenderContext($context), $target->getDocumentPath(), $target->getAnchor());
         }
 
         return $target->getUrl();
@@ -129,24 +143,13 @@ final class AssetsExtension extends AbstractExtension
     /** @param array{env: RenderContext} $context */
     public function renderMenu(array $context, string $menuType, int $maxMenuCount = 0): string
     {
-        $renderContext = $this->getRenderContext($context);
-        $rootDocument = $renderContext->getRootDocumentNode();
-        $menuNodes = [];
-        foreach ($rootDocument->getTocNodes() as $tocNode) {
-            $menuNode = NavMenuNode::fromTocNode($tocNode, $menuType);
-            $menuNodes[] = $menuNode;
-            if ($maxMenuCount > 0 && $maxMenuCount <= count($menuNodes)) {
-                break;
-            }
-        }
-
-        return $this->nodeRenderer->render(new CollectionNode($menuNodes), $renderContext);
+        return $this->menuExtension->renderMenu($context, $menuType);
     }
 
     /** @param array{env: RenderContext} $context */
     public function renderLink(array $context, string $url, string|null $anchor = null): string
     {
-        return $this->getRenderContext($context)->generateCanonicalOutputUrl($url, $anchor);
+        return $this->urlGenerator->generateCanonicalOutputUrl($this->getRenderContext($context), $url, $anchor);
     }
 
     private function copyAsset(
@@ -157,26 +160,28 @@ final class AssetsExtension extends AbstractExtension
             return $sourcePath;
         }
 
-        $canonicalUrl = $renderContext->canonicalUrl($sourcePath);
-        $outputPath = $this->urlGenerator->absoluteUrl(
+        $canonicalUrl = $this->documentNameResolver->canonicalUrl($renderContext->getDirName(), $sourcePath);
+        $normalizedSourcePath = $this->documentNameResolver->canonicalUrl($renderContext->getDirName(), $sourcePath);
+
+        $outputPath = $this->documentNameResolver->absoluteUrl(
             $renderContext->getDestinationPath(),
             $canonicalUrl,
         );
 
         try {
-            if ($renderContext->getOrigin()->has($sourcePath) === false) {
+            if ($renderContext->getOrigin()->has($normalizedSourcePath) === false) {
                 $this->logger->error(
-                    sprintf('Image reference not found "%s"', $sourcePath),
+                    sprintf('Image reference not found "%s"', $normalizedSourcePath),
                     $renderContext->getLoggerInformation(),
                 );
 
                 return $outputPath;
             }
 
-            $fileContents = $renderContext->getOrigin()->read($sourcePath);
+            $fileContents = $renderContext->getOrigin()->read($normalizedSourcePath);
             if ($fileContents === false) {
                 $this->logger->error(
-                    sprintf('Could not read image file "%s"', $sourcePath),
+                    sprintf('Could not read image file "%s"', $normalizedSourcePath),
                     $renderContext->getLoggerInformation(),
                 );
 
@@ -190,7 +195,7 @@ final class AssetsExtension extends AbstractExtension
                     $renderContext->getLoggerInformation(),
                 );
             }
-        } catch (LogicException | Exception $e) {
+        } catch (Throwable $e) {
             $this->logger->error(
                 sprintf('Unable to write file "%s", %s', $outputPath, $e->getMessage()),
                 $renderContext->getLoggerInformation(),
@@ -209,5 +214,23 @@ final class AssetsExtension extends AbstractExtension
         }
 
         return $renderContext;
+    }
+
+    public function renderOrderedListType(string $listType): string
+    {
+        switch ($listType) {
+            case 'numberdot':
+            case 'numberparentheses':
+            case 'numberright-parenthesis':
+                return '1';
+
+            case 'romandot':
+            case 'romanparentheses':
+            case 'romanright-parenthesis':
+                return 'i';
+
+            default:
+                return 'a';
+        }
     }
 }

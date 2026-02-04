@@ -17,23 +17,18 @@ use phpDocumentor\Reflection\DocBlock;
 use phpDocumentor\Reflection\Fqsen;
 use phpDocumentor\Reflection\Location;
 use phpDocumentor\Reflection\Metadata\MetaDataContainer as MetaDataContainerInterface;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 
-/**
- * @uses \phpDocumentor\Reflection\Php\Property
- * @uses \phpDocumentor\Reflection\Php\Constant
- * @uses \phpDocumentor\Reflection\Php\Method
- * @uses \phpDocumentor\Reflection\Php\Visibility
- *
- * @coversDefaultClass \phpDocumentor\Reflection\Php\Class_
- * @covers ::__construct
- * @covers ::<private>
- * @covers ::<protected>
- *
- * @property Class_ $fixture
- */
+/** @property Class_ $fixture */
+#[CoversClass(Class_::class)]
+#[UsesClass('\phpDocumentor\Reflection\Php\Property')]
+#[UsesClass('\phpDocumentor\Reflection\Php\Constant')]
+#[UsesClass('\phpDocumentor\Reflection\Php\Method')]
+#[UsesClass('\phpDocumentor\Reflection\Php\Visibility')]
 final class Class_Test extends TestCase
 {
-    use MetadataContainerTest;
+    use MetadataContainerTestHelper;
 
     private Fqsen $parent;
 
@@ -58,33 +53,21 @@ final class Class_Test extends TestCase
         return $this->fixture;
     }
 
-    /**
-     * @covers ::getName
-     */
     public function testGettingName(): void
     {
         $this->assertSame($this->fqsen->getName(), $this->fixture->getName());
     }
 
-    /**
-     * @covers ::getFqsen
-     */
     public function testGettingFqsen(): void
     {
         $this->assertSame($this->fqsen, $this->fixture->getFqsen());
     }
 
-    /**
-     * @covers ::getDocBlock
-     */
     public function testGettingDocBlock(): void
     {
         $this->assertSame($this->docBlock, $this->fixture->getDocBlock());
     }
 
-    /**
-     * @covers ::getParent
-     */
     public function testGettingParent(): void
     {
         $class = new Class_($this->fqsen, $this->docBlock);
@@ -94,10 +77,6 @@ final class Class_Test extends TestCase
         $this->assertSame($this->parent, $class->getParent());
     }
 
-    /**
-     * @covers ::getInterfaces
-     * @covers ::AddInterface
-     */
     public function testAddAndGettingInterfaces(): void
     {
         $this->assertEmpty($this->fixture->getInterfaces());
@@ -109,10 +88,6 @@ final class Class_Test extends TestCase
         $this->assertSame(['\MyInterface' => $interface], $this->fixture->getInterfaces());
     }
 
-    /**
-     * @covers ::getConstants
-     * @covers ::addConstant
-     */
     public function testAddAndGettingConstants(): void
     {
         $this->assertEmpty($this->fixture->getConstants());
@@ -124,10 +99,6 @@ final class Class_Test extends TestCase
         $this->assertSame(['\MyClass::MY_CONSTANT' => $constant], $this->fixture->getConstants());
     }
 
-    /**
-     * @covers ::addProperty
-     * @covers ::getProperties
-     */
     public function testAddAndGettingProperties(): void
     {
         $this->assertEmpty($this->fixture->getProperties());
@@ -139,10 +110,6 @@ final class Class_Test extends TestCase
         $this->assertSame(['\MyClass::$myProperty' => $property], $this->fixture->getProperties());
     }
 
-    /**
-     * @covers ::addMethod
-     * @covers ::getMethods
-     */
     public function testAddAndGettingMethods(): void
     {
         $this->assertEmpty($this->fixture->getMethods());
@@ -154,10 +121,6 @@ final class Class_Test extends TestCase
         $this->assertSame(['\MyClass::myMethod()' => $method], $this->fixture->getMethods());
     }
 
-    /**
-     * @covers ::getUsedTraits
-     * @covers ::AddUsedTrait
-     */
     public function testAddAndGettingUsedTrait(): void
     {
         $this->assertEmpty($this->fixture->getUsedTraits());
@@ -169,9 +132,6 @@ final class Class_Test extends TestCase
         $this->assertSame(['\MyTrait' => $trait], $this->fixture->getUsedTraits());
     }
 
-    /**
-     * @covers ::isAbstract
-     */
     public function testGettingWhetherClassIsAbstract(): void
     {
         $class = new Class_($this->fqsen, $this->docBlock);
@@ -181,9 +141,6 @@ final class Class_Test extends TestCase
         $this->assertTrue($class->isAbstract());
     }
 
-    /**
-     * @covers ::isFinal
-     */
     public function testGettingWhetherClassIsFinal(): void
     {
         $class = new Class_($this->fqsen, $this->docBlock);
@@ -193,9 +150,6 @@ final class Class_Test extends TestCase
         $this->assertTrue($class->isFinal());
     }
 
-    /**
-     * @covers ::isFinal
-     */
     public function testGettingWhetherClassIsReadOnly(): void
     {
         $class = new Class_($this->fqsen, $this->docBlock);
@@ -209,7 +163,7 @@ final class Class_Test extends TestCase
             false,
             null,
             null,
-            true
+            true,
         );
         $this->assertTrue($class->isReadOnly());
     }
@@ -223,7 +177,7 @@ final class Class_Test extends TestCase
             false,
             false,
             new Location(100, 20),
-            new Location(101, 20)
+            new Location(101, 20),
         );
         $this->assertLineAndColumnNumberIsReturnedWhenALocationIsProvided($fixture);
     }

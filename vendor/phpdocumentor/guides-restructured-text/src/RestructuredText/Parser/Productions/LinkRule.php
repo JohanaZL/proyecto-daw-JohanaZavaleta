@@ -50,10 +50,10 @@ final class LinkRule implements Rule
         $node = null;
         if ($link->getType() === LinkParser::TYPE_ANCHOR) {
             $node = new AnchorNode($link->getName());
+        } else {
+            //TODO: pass link object to setLink
+            $blockContext->getDocumentParserContext()->setLink($link->getName(), $link->getUrl());
         }
-
-        //TODO: pass link object to setLink
-        $blockContext->getDocumentParserContext()->getContext()->setLink($link->getName(), $link->getUrl());
 
         return $node;
     }
@@ -61,30 +61,30 @@ final class LinkRule implements Rule
     private function parseLink(string $line): LinkParser|null
     {
         // Links
-        if (preg_match('/^\.\.\s+_`(.+)`: (.+)$/mUsi', $line, $match) > 0) {
+        if (preg_match('/^\.\.\s+_`(.+)`: (.+)$/mUsi', $line, $match) === 1) {
             return $this->createLink($match[1], $match[2], LinkParser::TYPE_LINK);
         }
 
         // anonymous links
-        if (preg_match('/^\.\.\s+_(.+): (.+)$/mUsi', $line, $match) > 0) {
+        if (preg_match('/^\.\.\s+_(.+): (.+)$/mUsi', $line, $match) === 1) {
             return $this->createLink($match[1], $match[2], LinkParser::TYPE_LINK);
         }
 
         // Short anonymous links
-        if (preg_match('/^__\s+(.+)$/mUsi', trim($line), $match) > 0) {
+        if (preg_match('/^__\s+(.+)$/mUsi', trim($line), $match) === 1) {
             $url = $match[1];
 
             return $this->createLink('_', $url, LinkParser::TYPE_LINK);
         }
 
         // Anchor links - ".. _`anchor-link`:"
-        if (preg_match('/^\.\.\s+_`(.+)`:$/mUsi', trim($line), $match) > 0) {
+        if (preg_match('/^\.\.\s+_`(.+)`:$/mUsi', trim($line), $match) === 1) {
             $anchor = $match[1];
 
             return new LinkParser($anchor, '#' . $anchor, LinkParser::TYPE_ANCHOR);
         }
 
-        if (preg_match('/^\.\.\s+_(.+):$/mUsi', trim($line), $match) > 0) {
+        if (preg_match('/^\.\.\s+_(.+):$/mUsi', trim($line), $match) === 1) {
             $anchor = $match[1];
 
             return $this->createLink($anchor, '#' . $anchor, LinkParser::TYPE_ANCHOR);

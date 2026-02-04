@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace phpDocumentor\JsonPath\Parser;
 
+use Generator;
 use Parsica\Parsica\Parser;
 use phpDocumentor\JsonPath\AST\Comparison;
 use phpDocumentor\JsonPath\AST\CurrentNode;
@@ -24,6 +25,7 @@ use phpDocumentor\JsonPath\AST\Path;
 use phpDocumentor\JsonPath\AST\RootNode;
 use phpDocumentor\JsonPath\AST\Value;
 use phpDocumentor\JsonPath\AST\Wildcard;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 class ParserBuilderTest extends TestCase
@@ -45,6 +47,12 @@ class ParserBuilderTest extends TestCase
     {
         $result = $this->parser->tryString('@');
         self::assertEquals(new CurrentNode(), $result->output());
+    }
+
+    public function testCurrentNodeChildren(): void
+    {
+        $result = $this->parser->tryString('@.*');
+        self::assertEquals(new Path([new CurrentNode(), new FieldAccess(new Wildcard())]), $result->output());
     }
 
     public function testRootFieldAccess(): void
@@ -95,9 +103,10 @@ class ParserBuilderTest extends TestCase
         );
     }
 
-    public function testFilterExpressionCurrentObjectPropertyEquals(): void
+    #[DataProvider('operatorProvider')]
+    public function testFilterExpression(string $operator): void
     {
-        $result = $this->parser->tryString('$.store.books[?(@.title == "phpDoc")]');
+        $result = $this->parser->tryString('$.store.books[?(@.title ' . $operator . ' "phpDoc")]');
         self::assertEquals(
             new Path([
                 new RootNode(),
@@ -112,6 +121,49 @@ class ParserBuilderTest extends TestCase
                         new Path([
                             new CurrentNode(),
                             new FieldAccess(new FieldName('title')),
+                        ]),
+                        $operator,
+                        new Value(
+                            'phpDoc',
+                        ),
+                    ),
+                ),
+            ]),
+            $result->output(),
+        );
+    }
+
+    /** @return Generator<string, string> */
+    public static function operatorProvider(): Generator
+    {
+        $operators = [
+            '==',
+            '!=',
+            'starts_with',
+        ];
+
+        foreach ($operators as $operator) {
+            yield $operator => [$operator];
+        }
+    }
+
+    public function testFilterExpressionCurrentObjectProperyWildCard(): void
+    {
+        $result = $this->parser->tryString('$.store.books[?(@.* == "phpDoc")]');
+        self::assertEquals(
+            new Path([
+                new RootNode(),
+                new FieldAccess(
+                    new FieldName('store'),
+                ),
+                new FieldAccess(
+                    new FieldName('books'),
+                ),
+                new FilterNode(
+                    new Comparison(
+                        new Path([
+                            new CurrentNode(),
+                            new FieldAccess(new Wildcard()),
                         ]),
                         '==',
                         new Value(
@@ -140,8 +192,38 @@ class ParserBuilderTest extends TestCase
                     new Comparison(
                         new FunctionCall(
                             'type',
+                            new CurrentNode(),
+                        ),
+                        '==',
+                        new Value(
+                            'api',
+                        ),
+                    ),
+                ),
+            ]),
+            $result->output(),
+        );
+    }
+
+    public function testFilterExpressionCurrentObjectChildrenTypeEquals(): void
+    {
+        $result = $this->parser->tryString('$.store.books[?(type(@.*) == "api")]');
+        self::assertEquals(
+            new Path([
+                new RootNode(),
+                new FieldAccess(
+                    new FieldName('store'),
+                ),
+                new FieldAccess(
+                    new FieldName('books'),
+                ),
+                new FilterNode(
+                    new Comparison(
+                        new FunctionCall(
+                            'type',
                             new Path([
                                 new CurrentNode(),
+                                new FieldAccess(new Wildcard()),
                             ]),
                         ),
                         '==',
@@ -166,6 +248,29 @@ class ParserBuilderTest extends TestCase
                 ),
                 new FieldAccess(
                     new FieldName('books_title'),
+                ),
+                new FilterNode(
+                    new Wildcard(),
+                ),
+            ]),
+            $result->output(),
+        );
+    }
+
+    public function testFilterExpressionWildcardNested(): void
+    {
+        $result = $this->parser->tryString('$.store.books_title.*[*]');
+        self::assertEquals(
+            new Path([
+                new RootNode(),
+                new FieldAccess(
+                    new FieldName('store'),
+                ),
+                new FieldAccess(
+                    new FieldName('books_title'),
+                ),
+                new FieldAccess(
+                    new Wildcard(),
                 ),
                 new FilterNode(
                     new Wildcard(),

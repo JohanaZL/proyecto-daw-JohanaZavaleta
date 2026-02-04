@@ -22,6 +22,7 @@ use phpDocumentor\Guides\RestructuredText\Parser\BlockContext;
 use phpDocumentor\Guides\RestructuredText\Parser\Buffer;
 use phpDocumentor\Guides\RestructuredText\Parser\Directive;
 use phpDocumentor\Guides\RestructuredText\Parser\DirectiveOption;
+use phpDocumentor\Guides\RestructuredText\Parser\LineChecker;
 use phpDocumentor\Guides\RestructuredText\Parser\LinesIterator;
 use phpDocumentor\Guides\RestructuredText\Parser\UnindentStrategy;
 use Psr\Log\LoggerInterface;
@@ -69,12 +70,7 @@ final class DirectiveRule implements Rule
 
     public function applies(BlockContext $blockContext): bool
     {
-        return $this->isDirective($blockContext->getDocumentIterator()->current());
-    }
-
-    private function isDirective(string $line): bool
-    {
-        return preg_match('/^\.\.\s+(\|(.+)\| |)([^\s]+)::( (.*)|)$/mUsi', $line) > 0;
+        return LineChecker::isDirective($blockContext->getDocumentIterator()->current());
     }
 
     public function apply(BlockContext $blockContext, CompoundNode|null $on = null): Node|null
@@ -153,13 +149,21 @@ final class DirectiveRule implements Rule
      */
     private function postProcessNode(Node $node, array $options): Node
     {
+        $optionsForNode = [];
         foreach ($options as $option) {
-            if ($option->getName() !== 'class' || !is_string($option->getValue()) || $option->getValue() === '') {
+            if (!is_string($option->getValue())) {
                 continue;
             }
 
-            $node->setClasses(array_merge($node->getClasses(), explode(' ', (string) $option->getValue())));
+            if ($option->getName() === 'class') {
+                $node->setClasses(array_merge($node->getClasses(), explode(' ', (string) $option->getValue())));
+                continue;
+            }
+
+            $optionsForNode[$option->getName()] = $option->getValue();
         }
+
+        $node = $node->withOptions(array_merge($optionsForNode, $node->getOptions()));
 
         return $node;
     }
@@ -252,11 +256,11 @@ final class DirectiveRule implements Rule
      */
     private function parseDirectiveOption(string $line): DirectiveOption
     {
-        if (preg_match('/^(\s+):(.+): (.*)$/mUsi', $line, $match) > 0) {
+        if (preg_match('/^(\s+):(.+): (.*)$/mUsi', $line, $match) === 1) {
             return new DirectiveOption($match[2], trim($match[3]));
         }
 
-        if (preg_match('/^(\s+):(.+):(\s*)$/mUsi', $line, $match) > 0) {
+        if (preg_match('/^(\s+):(.+):(\s*)$/mUsi', $line, $match) === 1) {
             return new DirectiveOption($match[2], true);
         }
 

@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace phpDocumentor\Reflection\Php;
 
+use Override;
 use phpDocumentor\Reflection\DocBlock;
 use phpDocumentor\Reflection\Element;
 use phpDocumentor\Reflection\Fqsen;
@@ -22,15 +23,13 @@ use Webmozart\Assert\Assert;
 
 /**
  * Descriptor representing an Interface.
+ *
+ * @api
  */
-final class Interface_ implements Element, MetaDataContainerInterface
+final class Interface_ implements Element, MetaDataContainerInterface, AttributeContainer
 {
     use MetadataContainer;
-
-    /** @var Fqsen Full Qualified Structural Element Name */
-    private Fqsen $fqsen;
-
-    private ?DocBlock $docBlock;
+    use HasAttributes;
 
     /** @var Constant[] */
     private array $constants = [];
@@ -38,12 +37,9 @@ final class Interface_ implements Element, MetaDataContainerInterface
     /** @var Method[] */
     private array $methods = [];
 
-    /** @var Fqsen[] */
-    private array $parents = [];
+    private readonly Location $location;
 
-    private Location $location;
-
-    private Location $endLocation;
+    private readonly Location $endLocation;
 
     /**
      * Initializes the object.
@@ -51,17 +47,14 @@ final class Interface_ implements Element, MetaDataContainerInterface
      * @param Fqsen[] $parents
      */
     public function __construct(
-        Fqsen $fqsen,
-        array $parents = [],
-        ?DocBlock $docBlock = null,
-        ?Location $location = null,
-        ?Location $endLocation = null
+        /** @var Fqsen Full Qualified Structural Element Name */
+        private readonly Fqsen $fqsen,
+        private array $parents = [],
+        private readonly DocBlock|null $docBlock = null,
+        Location|null $location = null,
+        Location|null $endLocation = null,
     ) {
         Assert::allIsInstanceOf($parents, Fqsen::class);
-
-        $this->fqsen       = $fqsen;
-        $this->docBlock    = $docBlock;
-        $this->parents     = $parents;
         $this->location    = $location ?: new Location(-1);
         $this->endLocation = $endLocation ?: new Location(-1);
     }
@@ -105,6 +98,7 @@ final class Interface_ implements Element, MetaDataContainerInterface
     /**
      * Returns the Fqsen of the element.
      */
+    #[Override]
     public function getFqsen(): Fqsen
     {
         return $this->fqsen;
@@ -113,6 +107,7 @@ final class Interface_ implements Element, MetaDataContainerInterface
     /**
      * Returns the name of the element.
      */
+    #[Override]
     public function getName(): string
     {
         return $this->fqsen->getName();
@@ -121,7 +116,7 @@ final class Interface_ implements Element, MetaDataContainerInterface
     /**
      * Returns the DocBlock of this interface if available.
      */
-    public function getDocBlock(): ?DocBlock
+    public function getDocBlock(): DocBlock|null
     {
         return $this->docBlock;
     }

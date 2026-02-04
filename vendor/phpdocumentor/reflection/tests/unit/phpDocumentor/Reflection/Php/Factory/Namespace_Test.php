@@ -13,15 +13,14 @@ use phpDocumentor\Reflection\Php\StrategyContainer;
 use PhpParser\Node\Name;
 use PhpParser\Node\Stmt\Class_ as ClassNode;
 use PhpParser\Node\Stmt\Namespace_ as NamespaceNode;
+use PHPUnit\Framework\Attributes\CoversClass;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 use stdClass;
 
 use function current;
 
-/**
- * @coversDefaultClass \phpDocumentor\Reflection\Php\Factory\Namespace_
- */
+#[CoversClass(Namespace_::class)]
 final class Namespace_Test extends TestCase
 {
     use ProphecyTrait;
@@ -31,34 +30,25 @@ final class Namespace_Test extends TestCase
         $this->fixture = new Namespace_();
     }
 
-    /**
-     * @covers ::matches
-     */
     public function testMatches(): void
     {
         $this->assertFalse($this->fixture->matches(self::createContext(null), new stdClass()));
         $this->assertTrue($this->fixture->matches(
             self::createContext(null),
-            $this->prophesize(NamespaceNode::class)->reveal()
+            $this->prophesize(NamespaceNode::class)->reveal(),
         ));
     }
 
-    /**
-     * @covers ::create
-     */
     public function testCreateThrowsException(): void
     {
         $this->expectException(InvalidArgumentException::class);
         $this->fixture->create(
             self::createContext(null),
             new stdClass(),
-            $this->prophesize(StrategyContainer::class)->reveal()
+            $this->prophesize(StrategyContainer::class)->reveal(),
         );
     }
 
-    /**
-     * @covers ::create
-     */
     public function testIteratesStatements(): void
     {
         $class           = new ClassNode('\MyClass');
@@ -77,7 +67,7 @@ final class Namespace_Test extends TestCase
 
         $containerMock->findMatching(
             Argument::type(ContextStack::class),
-            $class
+            $class,
         )->willReturn($strategyMock->reveal());
 
         $file = new File('hash', 'path');

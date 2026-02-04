@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+/**
+ * This file is part of phpDocumentor.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @link https://phpdoc.org
+ */
+
 namespace phpDocumentor\Guides;
 
 use InvalidArgumentException;
@@ -21,7 +30,8 @@ use const DIRECTORY_SEPARATOR;
 //TODO remove this, as it is copied form phpDocumentor to make things work.
 final class UriFactory
 {
-    public const WINDOWS_URI_FORMAT = '~^(file:\/\/\/)?(?<root>[a-zA-Z][:|\|])~';
+    /** @see https://regex101.com/r/4UN6ZR/1 */
+    public const WINDOWS_URI_FORMAT_REGEX = '~^(file:\/\/\/)?(?<root>[a-zA-Z][:|\|])~';
 
     public static function createUri(string $uriString): UriInterface
     {
@@ -31,15 +41,15 @@ final class UriFactory
                 return self::createPharUri($uriString);
             }
 
-            if (preg_match(self::WINDOWS_URI_FORMAT, $uriString)) {
+            if (preg_match(self::WINDOWS_URI_FORMAT_REGEX, $uriString)) {
                 if (str_starts_with($uriString, 'file:///')) {
                     $uriString = substr($uriString, strlen('file:///'));
                 }
 
-                return LeagueUri::createFromWindowsPath($uriString);
+                return LeagueUri::fromWindowsPath($uriString);
             }
 
-            return LeagueUri::createFromString($uriString);
+            return LeagueUri::new($uriString);
         } catch (Throwable $exception) {
             throw new InvalidArgumentException(
                 sprintf(
@@ -60,7 +70,7 @@ final class UriFactory
             $path = '/' . $path;
         }
 
-        return LeagueUri::createFromComponents(
+        return LeagueUri::fromComponents(
             [
                 'scheme' => 'phar',
                 'host' => '',

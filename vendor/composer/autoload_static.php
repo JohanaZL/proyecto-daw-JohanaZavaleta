@@ -9,10 +9,16 @@ class ComposerStaticInit9ae2fb3389489985d6b367d43ed5b21e
     public static $files = array (
         '320cde22f66dd4f5d3fd621d3e88b98f' => __DIR__ . '/..' . '/symfony/polyfill-ctype/bootstrap.php',
         '0e6d7bf4a5811bfa5cf40c5ccd6fae6a' => __DIR__ . '/..' . '/symfony/polyfill-mbstring/bootstrap.php',
+        '662a729f963d39afe703c9d9b7ab4a8c' => __DIR__ . '/..' . '/symfony/polyfill-php83/bootstrap.php',
         'e69f7f6ee287b969198c3c9d6777bd38' => __DIR__ . '/..' . '/symfony/polyfill-intl-normalizer/bootstrap.php',
         '8825ede83f2f289127722d4e842cf7e8' => __DIR__ . '/..' . '/symfony/polyfill-intl-grapheme/bootstrap.php',
         'b6b991a57620e2fb6b2f66f03fe9ddc2' => __DIR__ . '/..' . '/symfony/string/Resources/functions.php',
-        '662a729f963d39afe703c9d9b7ab4a8c' => __DIR__ . '/..' . '/symfony/polyfill-php83/bootstrap.php',
+        '89efb1254ef2d1c5d80096acd12c4098' => __DIR__ . '/..' . '/twig/twig/src/Resources/core.php',
+        'ffecb95d45175fd40f75be8a23b34f90' => __DIR__ . '/..' . '/twig/twig/src/Resources/debug.php',
+        'c7baa00073ee9c61edf148c51917cfb4' => __DIR__ . '/..' . '/twig/twig/src/Resources/escaper.php',
+        'f844ccf1d25df8663951193c3fc307c8' => __DIR__ . '/..' . '/twig/twig/src/Resources/string_loader.php',
+        '2203a247e6fda86070a5e4e07aed533a' => __DIR__ . '/..' . '/symfony/clock/Resources/now.php',
+        '9d2b9fc6db0f153a0a149fefb182415e' => __DIR__ . '/..' . '/symfony/polyfill-php84/bootstrap.php',
         'a4a119a56e50fbb293281d9a48007e0e' => __DIR__ . '/..' . '/symfony/polyfill-php80/bootstrap.php',
         '9e4824c5afbdc1482b6025ce3d4dfde8' => __DIR__ . '/..' . '/league/csv/src/functions_include.php',
         '9eb40347f70870d4d4c016d3dd2f5056' => __DIR__ . '/..' . '/jawira/plantuml-encoding/src/plantuml_functions.php',
@@ -28,6 +34,7 @@ class ComposerStaticInit9ae2fb3389489985d6b367d43ed5b21e
         '1573166c90cc6845fe3af0c5d696dd47' => __DIR__ . '/..' . '/parsica-php/parsica/src/Expression/expression.php',
         '19db2fddbdac45468003bc044f3896dd' => __DIR__ . '/..' . '/parsica-php/parsica/src/Internal/FP.php',
         '549bd6f8e2401b9115114ebcad00190a' => __DIR__ . '/..' . '/parsica-php/parsica/src/Curry/functions.php',
+        'f676b98f38a402a86808bdc0d7751f5c' => __DIR__ . '/..' . '/phpdocumentor/reflection/src/php-parser/Modifiers.php',
         '2324d0e5cadd603331d27de142371f0b' => __DIR__ . '/..' . '/symfony/contracts/Deprecation/function.php',
         'f598d06aa772fa33d905e87be6398fb1' => __DIR__ . '/..' . '/symfony/polyfill-intl-idn/bootstrap.php',
     );
@@ -40,6 +47,7 @@ class ComposerStaticInit9ae2fb3389489985d6b367d43ed5b21e
             'phpDocumentor\\Guides\\' => 21,
             'phpDocumentor\\GraphViz\\PHPStan\\' => 31,
             'phpDocumentor\\GraphViz\\' => 23,
+            'phpDocumentor\\FileSystem\\' => 25,
             'phpDocumentor\\' => 14,
         ),
         'W' => 
@@ -52,6 +60,7 @@ class ComposerStaticInit9ae2fb3389489985d6b367d43ed5b21e
         ),
         'S' => 
         array (
+            'Symfony\\Polyfill\\Php84\\' => 23,
             'Symfony\\Polyfill\\Php83\\' => 23,
             'Symfony\\Polyfill\\Php80\\' => 23,
             'Symfony\\Polyfill\\Mbstring\\' => 26,
@@ -70,6 +79,7 @@ class ComposerStaticInit9ae2fb3389489985d6b367d43ed5b21e
             'Symfony\\Component\\PropertyAccess\\' => 33,
             'Symfony\\Component\\Process\\' => 26,
             'Symfony\\Component\\HttpClient\\' => 29,
+            'Symfony\\Component\\HtmlSanitizer\\' => 32,
             'Symfony\\Component\\Finder\\' => 25,
             'Symfony\\Component\\Filesystem\\' => 29,
             'Symfony\\Component\\ExpressionLanguage\\' => 37,
@@ -79,6 +89,7 @@ class ComposerStaticInit9ae2fb3389489985d6b367d43ed5b21e
             'Symfony\\Component\\DependencyInjection\\' => 38,
             'Symfony\\Component\\Console\\' => 26,
             'Symfony\\Component\\Config\\' => 25,
+            'Symfony\\Component\\Clock\\' => 24,
             'Symfony\\Component\\Cache\\' => 24,
         ),
         'P' => 
@@ -87,6 +98,7 @@ class ComposerStaticInit9ae2fb3389489985d6b367d43ed5b21e
             'Psr\\Http\\Message\\' => 17,
             'Psr\\EventDispatcher\\' => 20,
             'Psr\\Container\\' => 14,
+            'Psr\\Clock\\' => 10,
             'Psr\\Cache\\' => 10,
             'ProyectoDAW\\' => 12,
             'PhpParser\\' => 10,
@@ -106,7 +118,6 @@ class ComposerStaticInit9ae2fb3389489985d6b367d43ed5b21e
         array (
             'League\\Uri\\' => 11,
             'League\\Tactician\\' => 17,
-            'League\\Pipeline\\' => 16,
             'League\\MimeTypeDetection\\' => 25,
             'League\\Flysystem\\' => 17,
             'League\\Csv\\' => 11,
@@ -142,10 +153,10 @@ class ComposerStaticInit9ae2fb3389489985d6b367d43ed5b21e
         ),
         'phpDocumentor\\Guides\\' => 
         array (
-            0 => __DIR__ . '/..' . '/phpdocumentor/guides/src',
+            0 => __DIR__ . '/..' . '/phpdocumentor/guides-markdown/src',
             1 => __DIR__ . '/..' . '/phpdocumentor/guides-graphs/src',
-            2 => __DIR__ . '/..' . '/phpdocumentor/guides-markdown/src',
-            3 => __DIR__ . '/..' . '/phpdocumentor/guides-restructured-text/src',
+            2 => __DIR__ . '/..' . '/phpdocumentor/guides-restructured-text/src',
+            3 => __DIR__ . '/..' . '/phpdocumentor/guides/src',
         ),
         'phpDocumentor\\GraphViz\\PHPStan\\' => 
         array (
@@ -155,10 +166,14 @@ class ComposerStaticInit9ae2fb3389489985d6b367d43ed5b21e
         array (
             0 => __DIR__ . '/..' . '/phpdocumentor/graphviz/src/phpDocumentor/GraphViz',
         ),
+        'phpDocumentor\\FileSystem\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/phpdocumentor/filesystem/src',
+        ),
         'phpDocumentor\\' => 
         array (
-            0 => __DIR__ . '/..' . '/phpdocumentor/phpdocumentor/src/phpDocumentor',
-            1 => __DIR__ . '/..' . '/phpdocumentor/reflection/src/phpDocumentor',
+            0 => __DIR__ . '/..' . '/phpdocumentor/reflection/src/phpDocumentor',
+            1 => __DIR__ . '/..' . '/phpdocumentor/phpdocumentor/src/phpDocumentor',
         ),
         'Webmozart\\Assert\\' => 
         array (
@@ -167,6 +182,10 @@ class ComposerStaticInit9ae2fb3389489985d6b367d43ed5b21e
         'Twig\\' => 
         array (
             0 => __DIR__ . '/..' . '/twig/twig/src',
+        ),
+        'Symfony\\Polyfill\\Php84\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/symfony/polyfill-php84',
         ),
         'Symfony\\Polyfill\\Php83\\' => 
         array (
@@ -240,6 +259,10 @@ class ComposerStaticInit9ae2fb3389489985d6b367d43ed5b21e
         array (
             0 => __DIR__ . '/..' . '/symfony/http-client',
         ),
+        'Symfony\\Component\\HtmlSanitizer\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/symfony/html-sanitizer',
+        ),
         'Symfony\\Component\\Finder\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/finder',
@@ -276,6 +299,10 @@ class ComposerStaticInit9ae2fb3389489985d6b367d43ed5b21e
         array (
             0 => __DIR__ . '/..' . '/symfony/config',
         ),
+        'Symfony\\Component\\Clock\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/symfony/clock',
+        ),
         'Symfony\\Component\\Cache\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/cache',
@@ -286,7 +313,8 @@ class ComposerStaticInit9ae2fb3389489985d6b367d43ed5b21e
         ),
         'Psr\\Http\\Message\\' => 
         array (
-            0 => __DIR__ . '/..' . '/psr/http-message/src',
+            0 => __DIR__ . '/..' . '/psr/http-factory/src',
+            1 => __DIR__ . '/..' . '/psr/http-message/src',
         ),
         'Psr\\EventDispatcher\\' => 
         array (
@@ -295,6 +323,10 @@ class ComposerStaticInit9ae2fb3389489985d6b367d43ed5b21e
         'Psr\\Container\\' => 
         array (
             0 => __DIR__ . '/..' . '/psr/container/src',
+        ),
+        'Psr\\Clock\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/psr/clock/src',
         ),
         'Psr\\Cache\\' => 
         array (
@@ -331,16 +363,12 @@ class ComposerStaticInit9ae2fb3389489985d6b367d43ed5b21e
         ),
         'League\\Uri\\' => 
         array (
-            0 => __DIR__ . '/..' . '/league/uri/src',
-            1 => __DIR__ . '/..' . '/league/uri-interfaces/src',
+            0 => __DIR__ . '/..' . '/league/uri-interfaces',
+            1 => __DIR__ . '/..' . '/league/uri',
         ),
         'League\\Tactician\\' => 
         array (
             0 => __DIR__ . '/..' . '/league/tactician/src',
-        ),
-        'League\\Pipeline\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/league/pipeline/src',
         ),
         'League\\MimeTypeDetection\\' => 
         array (
@@ -384,16 +412,6 @@ class ComposerStaticInit9ae2fb3389489985d6b367d43ed5b21e
         ),
     );
 
-    public static $prefixesPsr0 = array (
-        'T' => 
-        array (
-            'Twig_' => 
-            array (
-                0 => __DIR__ . '/..' . '/twig/twig/lib',
-            ),
-        ),
-    );
-
     public static $classMap = array (
         'Attribute' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/Attribute.php',
         'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
@@ -406,6 +424,8 @@ class ComposerStaticInit9ae2fb3389489985d6b367d43ed5b21e
         'DateMalformedStringException' => __DIR__ . '/..' . '/symfony/polyfill-php83/Resources/stubs/DateMalformedStringException.php',
         'DateObjectError' => __DIR__ . '/..' . '/symfony/polyfill-php83/Resources/stubs/DateObjectError.php',
         'DateRangeError' => __DIR__ . '/..' . '/symfony/polyfill-php83/Resources/stubs/DateRangeError.php',
+        'Deprecated' => __DIR__ . '/..' . '/symfony/polyfill-php84/Resources/stubs/Deprecated.php',
+        'League\\Flysystem\\FilesystemInterface' => __DIR__ . '/..' . '/phpdocumentor/filesystem/Flysystem/FilesystemInterface.php',
         'Nette\\ArgumentOutOfRangeException' => __DIR__ . '/..' . '/nette/utils/src/exceptions.php',
         'Nette\\DeprecatedException' => __DIR__ . '/..' . '/nette/utils/src/exceptions.php',
         'Nette\\DirectoryNotFoundException' => __DIR__ . '/..' . '/nette/utils/src/exceptions.php',
@@ -543,6 +563,7 @@ class ComposerStaticInit9ae2fb3389489985d6b367d43ed5b21e
         'PharIo\\Version\\VersionConstraintValue' => __DIR__ . '/..' . '/phar-io/version/src/VersionConstraintValue.php',
         'PharIo\\Version\\VersionNumber' => __DIR__ . '/..' . '/phar-io/version/src/VersionNumber.php',
         'PhpToken' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/PhpToken.php',
+        'ReflectionConstant' => __DIR__ . '/..' . '/symfony/polyfill-php84/Resources/stubs/ReflectionConstant.php',
         'SQLite3Exception' => __DIR__ . '/..' . '/symfony/polyfill-php83/Resources/stubs/SQLite3Exception.php',
         'Stringable' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/Stringable.php',
         'UnhandledMatchError' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/UnhandledMatchError.php',
@@ -555,7 +576,6 @@ class ComposerStaticInit9ae2fb3389489985d6b367d43ed5b21e
         return \Closure::bind(function () use ($loader) {
             $loader->prefixLengthsPsr4 = ComposerStaticInit9ae2fb3389489985d6b367d43ed5b21e::$prefixLengthsPsr4;
             $loader->prefixDirsPsr4 = ComposerStaticInit9ae2fb3389489985d6b367d43ed5b21e::$prefixDirsPsr4;
-            $loader->prefixesPsr0 = ComposerStaticInit9ae2fb3389489985d6b367d43ed5b21e::$prefixesPsr0;
             $loader->classMap = ComposerStaticInit9ae2fb3389489985d6b367d43ed5b21e::$classMap;
 
         }, null, ClassLoader::class);

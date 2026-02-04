@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+/**
+ * This file is part of phpDocumentor.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @link https://phpdoc.org
+ */
+
 namespace phpDocumentor\Guides\Twig;
 
 use phpDocumentor\Guides\RenderContext;
@@ -10,7 +19,7 @@ use Twig\Environment;
 use Twig\Extension\DebugExtension;
 use Twig\Extension\ExtensionInterface;
 
-class EnvironmentBuilder
+final class EnvironmentBuilder
 {
     private Environment $environment;
 

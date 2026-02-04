@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+/**
+ * This file is part of phpDocumentor.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @link https://phpdoc.org
+ */
+
 namespace phpDocumentor\Guides\RestructuredText\Parser;
 
 use Doctrine\Common\Lexer\AbstractLexer;
@@ -10,10 +19,17 @@ use ReflectionClass;
 
 use function array_column;
 use function array_flip;
+use function ctype_alnum;
+use function ctype_space;
 use function parse_url;
 use function preg_match;
+use function str_ends_with;
+use function str_replace;
+use function strlen;
+use function substr;
 
 use const PHP_URL_SCHEME;
+use const PHP_VERSION_ID;
 
 /** @extends AbstractLexer<int, string> */
 final class InlineLexer extends AbstractLexer
@@ -23,8 +39,6 @@ final class InlineLexer extends AbstractLexer
     public const ANONYMOUS_END = 3;
     public const LITERAL = 5;
     public const BACKTICK = 6;
-    public const EMBEDED_URL_START = 9;
-    public const EMBEDED_URL_END = 10;
     public const NAMED_REFERENCE = 11;
     public const ANONYMOUSE_REFERENCE = 12;
     public const COLON = 13;
@@ -57,19 +71,17 @@ final class InlineLexer extends AbstractLexer
             '\\\\``', // must be a separate case, as the next pattern would split in "\`" + "`", causing it to become a intepreted text
             '\\\\[\s\S]', // Escaping hell... needs escaped slash in regex, but also in php.
             '[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}',
-            '[a-z0-9-]+_{2}', //Inline href.
-            '[a-z0-9-]+_{1}(?=[\s\.+]|$)', //Inline href.
+            '(?<=^|\s)[a-z0-9-]+_{2}', //Inline href.
+            '(?<=^|\s)[a-z0-9-]+_{1}(?=[\s\.+]|$)', //Inline href.
             '``.+?``(?!`)',
             '_{2}',
             '_',
-            '<',
-            '>',
             '`',
             ':',
             '|',
             '\\*\\*',
             '\\*',
-            '\b(?<!:)[a-z0-9\\.\-+]{2,}:[-a-zA-Z0-9()@:%_\\+.~#?&\\/=]*[-a-zA-Z0-9()@%_\\+~#&\\/=]', // standalone hyperlinks
+            '\b(?<!:)[a-z0-9\\.\-+]{2,}:\\/\\/[-a-zA-Z0-9@:%_\\+.~#?&\\/=]*[-a-zA-Z0-9@%_\\+~#&\\/=]', // standalone hyperlinks
         ];
     }
 
@@ -88,7 +100,11 @@ final class InlineLexer extends AbstractLexer
 
         $class = new ReflectionClass(AbstractLexer::class);
         $property = $class->getProperty('tokens');
-        $property->setAccessible(true);
+        //phpcs:ignore SlevomatCodingStandard.Numbers.RequireNumericLiteralSeparator.RequiredNumericLiteralSeparator
+        if (PHP_VERSION_ID < 80500) {
+            $property->setAccessible(true);
+        }
+
         /** @var array<int, string> $tokens */
         $tokens = $property->getValue($this);
 
@@ -104,41 +120,12 @@ final class InlineLexer extends AbstractLexer
     /** @inheritDoc */
     protected function getType(string &$value)
     {
-        if (preg_match('/^\\\\[\s\S]/i', $value)) {
-            return self::ESCAPED_SIGN;
-        }
-
-        if (preg_match('/``.+``(?!`)/i', $value)) {
-            return self::LITERAL;
-        }
-
-        if (preg_match('/' . ExternalReferenceResolver::SUPPORTED_SCHEMAS . ':[-a-zA-Z0-9()@:%_\\+.~#?&\\/=]*[-a-zA-Z0-9()@%_\\+~#&\\/=]/', $value) && parse_url($value, PHP_URL_SCHEME) !== null) {
-            return self::HYPERLINK;
-        }
-
-        if (preg_match('/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}/i', $value)) {
-            return self::EMAIL;
-        }
-
-        if (preg_match('/[a-z0-9-]+_{2}/i', $value)) {
-            return self::ANONYMOUSE_REFERENCE;
-        }
-
-        if (preg_match('/[a-z0-9-]+_{1}(?=\s|$)/i', $value)) {
-            return self::NAMED_REFERENCE;
-        }
-
-        if (preg_match('/\s/i', $value)) {
-            return self::WHITESPACE;
-        }
-
-        return match ($value) {
+        $type = match ($value) {
             '`' => self::BACKTICK,
+            '``' => self::DOUBLE_BACKTICK,
             '**' => self::STRONG_DELIMITER,
             '*' => self::EMPHASIS_DELIMITER,
             '|' => self::VARIABLE_DELIMITER,
-            '<' => self::EMBEDED_URL_START,
-            '>' => self::EMBEDED_URL_END,
             '_' => self::UNDERSCORE,
             '__' => self::ANONYMOUS_END,
             ':' => self::COLON,
@@ -146,7 +133,43 @@ final class InlineLexer extends AbstractLexer
             '[' => self::ANNOTATION_START,
             ']' => self::ANNOTATION_END,
             '~' => self::NBSP,
-            default => self::WORD,
+            '\\``' => self::ESCAPED_SIGN,
+            default => null,
         };
+
+        if ($type !== null) {
+            return $type;
+        }
+
+        // $value is already a tokenized part. Therefore, we have to match against the complete String here.
+        if (str_ends_with($value, '__') && ctype_alnum(str_replace('-', '', substr($value, 0, -2)))) {
+            return self::ANONYMOUSE_REFERENCE;
+        }
+
+        if (str_ends_with($value, '_') && ctype_alnum(str_replace('-', '', substr($value, 0, -1)))) {
+            return self::NAMED_REFERENCE;
+        }
+
+        if (strlen($value) === 2 && $value[0] === '\\') {
+            return self::ESCAPED_SIGN;
+        }
+
+        if (strlen($value) === 1 && ctype_space($value)) {
+            return self::WHITESPACE;
+        }
+
+        if (preg_match('/^``.+``(?!`)$/i', $value)) {
+            return self::LITERAL;
+        }
+
+        if (preg_match('/' . ExternalReferenceResolver::SUPPORTED_SCHEMAS . ':[-a-zA-Z0-9()@:%_\\+.~#?&\\/=]*[-a-zA-Z0-9()@%_\\+~#&\\/=]/', $value) && parse_url($value, PHP_URL_SCHEME) !== null) {
+            return self::HYPERLINK;
+        }
+
+        if (preg_match('/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$/i', $value)) {
+            return self::EMAIL;
+        }
+
+        return self::WORD;
     }
 }

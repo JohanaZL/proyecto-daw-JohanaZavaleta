@@ -19,8 +19,10 @@ use phpDocumentor\Guides\Nodes\TableNode;
 use phpDocumentor\Guides\RenderContext;
 use phpDocumentor\Guides\TemplateRenderer;
 
+use function is_a;
+
 /** @implements NodeRenderer<TableNode> */
-class TableNodeRenderer implements NodeRenderer
+final class TableNodeRenderer implements NodeRenderer
 {
     public function __construct(private readonly TemplateRenderer $renderer)
     {
@@ -42,8 +44,8 @@ class TableNodeRenderer implements NodeRenderer
         );
     }
 
-    public function supports(Node $node): bool
+    public function supports(string $nodeFqcn): bool
     {
-        return $node instanceof TableNode;
+        return $nodeFqcn === TableNode::class || is_a($nodeFqcn, TableNode::class, true);
     }
 }

@@ -22,10 +22,10 @@ use phpDocumentor\Reflection\Php\ProjectFactoryStrategy;
 use phpDocumentor\Reflection\Php\StrategyContainer;
 use PhpParser\Comment\Doc;
 use PhpParser\Node\Expr\FuncCall;
-use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Name;
-use PhpParser\Node\Param;
 use PhpParser\Node\Stmt\Expression;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Prophecy\Prophecy\ObjectProphecy;
@@ -33,17 +33,11 @@ use stdClass;
 
 use function current;
 
-/**
- * @uses   \phpDocumentor\Reflection\Php\Factory\Function_::matches
- * @uses   \phpDocumentor\Reflection\Php\Function_
- * @uses   \phpDocumentor\Reflection\Php\Argument
- * @uses   \phpDocumentor\Reflection\Php\Factory\Type
- *
- * @coversDefaultClass \phpDocumentor\Reflection\Php\Factory\Function_
- * @covers \phpDocumentor\Reflection\Php\Factory\AbstractFactory
- * @covers ::<private>
- * @covers ::<protected>
- */
+#[CoversClass(Function_::class)]
+#[CoversClass(AbstractFactory::class)]
+#[UsesClass('\phpDocumentor\Reflection\Php\Function_')]
+#[UsesClass('\phpDocumentor\Reflection\Php\Argument')]
+#[UsesClass('\phpDocumentor\Reflection\Php\Factory\Type')]
 final class Function_Test extends TestCase
 {
     use ProphecyTrait;
@@ -56,24 +50,20 @@ final class Function_Test extends TestCase
         $this->fixture = new Function_($this->docBlockFactory->reveal());
     }
 
-    /**
-     * @covers ::matches
-     */
     public function testMatches(): void
     {
         $this->assertFalse($this->fixture->matches(self::createContext(null), new stdClass()));
         $this->assertTrue($this->fixture->matches(
             self::createContext(null)->push(new File('hash', 'path')),
-            $this->prophesize(\PhpParser\Node\Stmt\Function_::class)->reveal()
+            $this->prophesize(\PhpParser\Node\Stmt\Function_::class)->reveal(),
         ));
     }
 
-    /**
-     * @covers ::create
-     */
     public function testCreateWithoutParameters(): void
     {
         $functionMock = $this->prophesize(\PhpParser\Node\Stmt\Function_::class);
+        $functionMock->byRef = false;
+        $functionMock->stmts = [];
         $functionMock->getAttribute('fqsen')->willReturn(new Fqsen('\SomeSpace::function()'));
         $functionMock->params = [];
         $functionMock->getDocComment()->willReturn(null);
@@ -91,50 +81,12 @@ final class Function_Test extends TestCase
         $this->assertEquals('\SomeSpace::function()', (string) $function->getFqsen());
     }
 
-    /**
-     * @covers ::create
-     */
-    public function testCreateWithParameters(): void
-    {
-        $param1 = new Param(new Variable('param1'));
-        $functionMock = $this->prophesize(\PhpParser\Node\Stmt\Function_::class);
-        $functionMock->getAttribute('fqsen')->willReturn(new Fqsen('\SomeSpace::function()'));
-        $functionMock->params = [$param1];
-        $functionMock->getDocComment()->willReturn(null);
-        $functionMock->getLine()->willReturn(1);
-        $functionMock->getEndLine()->willReturn(2);
-        $functionMock->getReturnType()->willReturn(null);
-
-        $argumentStrategy = $this->prophesize(ProjectFactoryStrategy::class);
-        $containerMock = $this->prophesize(StrategyContainer::class);
-        $containerMock->findMatching(Argument::type(ContextStack::class), $param1)->willReturn($argumentStrategy);
-        $argumentStrategy->create(
-            Argument::that(fn ($agument): bool => $agument->peek() instanceof FunctionDescriptor),
-            $param1,
-            $containerMock->reveal()
-        )->shouldBeCalled();
-
-        $file = new File('hash', 'path');
-
-        $this->fixture->create(
-            self::createContext(null)->push($file),
-            $functionMock->reveal(),
-            $containerMock->reveal()
-        );
-
-        $function = current($file->getFunctions());
-
-        self::assertInstanceOf(FunctionDescriptor::class, $function);
-        $this->assertEquals('\SomeSpace::function()', (string) $function->getFqsen());
-    }
-
-    /**
-     * @covers ::create
-     */
     public function testCreateWithDocBlock(): void
     {
         $doc = new Doc('Text');
         $functionMock = $this->prophesize(\PhpParser\Node\Stmt\Function_::class);
+        $functionMock->byRef = false;
+        $functionMock->stmts = [];
         $functionMock->getAttribute('fqsen')->willReturn(new Fqsen('\SomeSpace::function()'));
         $functionMock->params = [];
         $functionMock->getDocComment()->willReturn($doc);
@@ -155,13 +107,12 @@ final class Function_Test extends TestCase
         $this->assertSame($docBlock, $function->getDocBlock());
     }
 
-    /**
-     * @covers ::create
-     */
     public function testIteratesStatements(): void
     {
         $doc = new Doc('Text');
         $functionMock = $this->prophesize(\PhpParser\Node\Stmt\Function_::class);
+        $functionMock->byRef = false;
+        $functionMock->stmts = [];
         $functionMock->getAttribute('fqsen')->willReturn(new Fqsen('\SomeSpace::function()'));
         $functionMock->params = [];
         $functionMock->getDocComment()->willReturn(null);
@@ -175,14 +126,14 @@ final class Function_Test extends TestCase
         $containerMock = $this->prophesize(StrategyContainer::class);
         $containerMock->findMatching(
             Argument::type(ContextStack::class),
-            Argument::type(Expression::class)
+            Argument::type(Expression::class),
         )->willReturn($strategyMock->reveal())->shouldBeCalledOnce();
 
         $file = new File('hash', 'path');
         $this->fixture->create(
             self::createContext(null)->push($file),
             $functionMock->reveal(),
-            $containerMock->reveal()
+            $containerMock->reveal(),
         );
     }
 }

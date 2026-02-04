@@ -26,6 +26,8 @@ use PhpParser\Comment\Doc;
 use PhpParser\Node\Name;
 use PhpParser\Node\Stmt\Class_ as ClassNode;
 use PhpParser\Node\Stmt\ClassMethod;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Prophecy\Prophecy\ObjectProphecy;
@@ -33,21 +35,15 @@ use stdClass;
 
 use function current;
 
-/**
- * @uses \phpDocumentor\Reflection\Php\Class_
- * @uses \phpDocumentor\Reflection\Php\Constant
- * @uses \phpDocumentor\Reflection\Php\Property
- * @uses \phpDocumentor\Reflection\Php\Visibility
- * @uses \phpDocumentor\Reflection\Php\Method
- * @uses \phpDocumentor\Reflection\Php\Factory\Class_::matches
- * @uses \phpDocumentor\Reflection\Php\Factory\ClassConstantIterator
- * @uses \phpDocumentor\Reflection\Php\Factory\PropertyIterator
- *
- * @coversDefaultClass \phpDocumentor\Reflection\Php\Factory\Class_
- * @covers \phpDocumentor\Reflection\Php\Factory\AbstractFactory
- * @covers ::<protected>
- * @covers ::<private>
- */
+#[CoversClass(Class_::class)]
+#[CoversClass(AbstractFactory::class)]
+#[UsesClass('\phpDocumentor\Reflection\Php\Class_')]
+#[UsesClass('\phpDocumentor\Reflection\Php\Constant')]
+#[UsesClass('\phpDocumentor\Reflection\Php\Property')]
+#[UsesClass('\phpDocumentor\Reflection\Php\Visibility')]
+#[UsesClass('\phpDocumentor\Reflection\Php\Method')]
+#[UsesClass('\phpDocumentor\Reflection\Php\Factory\ClassConstantIterator')]
+#[UsesClass('\phpDocumentor\Reflection\Php\Factory\PropertyIterator')]
 final class Class_Test extends TestCase
 {
     use ProphecyTrait;
@@ -60,23 +56,17 @@ final class Class_Test extends TestCase
         $this->fixture = new Class_($this->docblockFactory->reveal());
     }
 
-    /**
-     * @covers ::matches
-     */
     public function testMatches(): void
     {
         $this->assertFalse($this->fixture->matches(self::createContext(null), new stdClass()));
         $this->assertTrue(
             $this->fixture->matches(
                 self::createContext(null),
-                $this->prophesize(ClassNode::class)->reveal()
-            )
+                $this->prophesize(ClassNode::class)->reveal(),
+            ),
         );
     }
 
-    /**
-     * @covers ::create
-     */
     public function testSimpleCreate(): void
     {
         $containerMock = m::mock(StrategyContainer::class);
@@ -92,15 +82,12 @@ final class Class_Test extends TestCase
         $this->assertTrue($class->isAbstract());
     }
 
-    /**
-     * @covers ::create
-     */
     public function testClassWithParent(): void
     {
         $containerMock = m::mock(StrategyContainer::class);
         $classMock     = $this->buildClassMock();
         $classMock->shouldReceive('getDocComment')->andReturnNull();
-        $classMock->extends = 'Space\MyParent';
+        $classMock->extends = new Name('Space\MyParent');
 
         $class = $this->performCreate($classMock, $containerMock);
 
@@ -109,15 +96,12 @@ final class Class_Test extends TestCase
         $this->assertEquals('\Space\MyParent', (string) $class->getParent());
     }
 
-    /**
-     * @covers ::create
-     */
     public function testClassImplementingInterface(): void
     {
         $containerMock = m::mock(StrategyContainer::class);
         $classMock     = $this->buildClassMock();
         $classMock->shouldReceive('getDocComment')->andReturnNull();
-        $classMock->extends    = 'Space\MyParent';
+        $classMock->extends    = new Name('Space\MyParent');
         $classMock->implements = [
             new Name('MyInterface'),
         ];
@@ -129,13 +113,10 @@ final class Class_Test extends TestCase
 
         $this->assertEquals(
             ['\MyInterface' => new Fqsen('\MyInterface')],
-            $class->getInterfaces()
+            $class->getInterfaces(),
         );
     }
 
-    /**
-     * @covers ::create
-     */
     public function testIteratesStatements(): void
     {
         $method1           = new ClassMethod('MyClass::method1');
@@ -154,7 +135,7 @@ final class Class_Test extends TestCase
 
         $containerMock->findMatching(
             Argument::type(ContextStack::class),
-            $method1
+            $method1,
         )->willReturn($strategyMock->reveal());
 
         $class = $this->performCreate($classMock, $containerMock->reveal());
@@ -163,13 +144,10 @@ final class Class_Test extends TestCase
         $this->assertEquals('\Space\MyClass', (string) $class->getFqsen());
         $this->assertEquals(
             ['\MyClass::method1' => $method1Descriptor],
-            $class->getMethods()
+            $class->getMethods(),
         );
     }
 
-    /**
-     * @covers ::create
-     */
     public function testCreateWithDocBlock(): void
     {
         $doc       = new Doc('Text');
@@ -184,10 +162,7 @@ final class Class_Test extends TestCase
         $this->assertSame($docBlock, $class->getDocBlock());
     }
 
-    /**
-     * @return m\MockInterface|ClassNode
-     */
-    private function buildClassMock()
+    private function buildClassMock(): m\MockInterface|ClassNode
     {
         $classMock = m::mock(ClassNode::class);
         $classMock->shouldReceive('getAttribute')->andReturn(new Fqsen('\Space\MyClass'));

@@ -22,6 +22,8 @@ use PhpParser\Node\Scalar\String_;
 use PhpParser\Node\Stmt\Class_ as ClassNode;
 use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\PrettyPrinter\Standard;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Prophecy\Prophecy\ObjectProphecy;
@@ -29,9 +31,7 @@ use stdClass;
 
 use function current;
 
-/**
- * @coversDefaultClass \phpDocumentor\Reflection\Php\Factory\ConstructorPromotion
- */
+#[CoversClass(ConstructorPromotion::class)]
 final class ConstructorPromotionTest extends TestCase
 {
     use ProphecyTrait;
@@ -49,24 +49,18 @@ final class ConstructorPromotionTest extends TestCase
         $this->fixture = new ConstructorPromotion(
             $this->strategy->reveal(),
             $this->docblockFactory->reveal(),
-            $printer->reveal()
+            $printer->reveal(),
         );
     }
 
-    /**
-     * @dataProvider objectProvider
-     * @covers ::__construct
-     * @covers ::matches
-     */
+    #[DataProvider('objectProvider')]
     public function testMatches(ContextStack $context, object $object, bool $expected): void
     {
         self::assertEquals($expected, $this->fixture->matches($context, $object));
     }
 
-    /**
-     * @return mixed[][]
-     */
-    public function objectProvider(): array
+    /** @return mixed[][] */
+    public static function objectProvider(): array
     {
         $context = new ContextStack(new Project('test'));
 
@@ -94,13 +88,7 @@ final class ConstructorPromotionTest extends TestCase
         ];
     }
 
-    /**
-     * @covers ::buildPropertyVisibilty
-     * @covers ::doCreate
-     * @covers ::promoteParameterToProperty
-     * @covers ::readOnly
-     * @dataProvider visibilityProvider
-     */
+    #[DataProvider('visibilityProvider')]
     public function testCreateWithProperty(int $flags, string $visibility, bool $readOnly = false): void
     {
         $methodNode         = new ClassMethod('__construct');
@@ -116,7 +104,7 @@ final class ConstructorPromotionTest extends TestCase
                         new Doc('text'),
                     ],
                 ],
-                $flags
+                $flags,
             ),
         ];
 
@@ -131,7 +119,7 @@ final class ConstructorPromotionTest extends TestCase
         $this->fixture->create(
             $context,
             $methodNode,
-            $this->prophesize(StrategyContainer::class)->reveal()
+            $this->prophesize(StrategyContainer::class)->reveal(),
         );
 
         $property = current($class->getProperties());
@@ -145,7 +133,7 @@ final class ConstructorPromotionTest extends TestCase
     }
 
     /** @return mixed[][] */
-    public function visibilityProvider(): array
+    public static function visibilityProvider(): array
     {
         return [
             [

@@ -27,12 +27,15 @@ use function count;
 use function ltrim;
 use function mb_strlen;
 use function mb_substr;
+use function ord;
 use function preg_match;
 use function sprintf;
 use function str_ends_with;
 use function str_starts_with;
 use function strlen;
 use function strpos;
+use function strtolower;
+use function strtoupper;
 use function trim;
 
 /**
@@ -47,7 +50,7 @@ final class EnumeratedListRule implements Rule
     private const ROMAN_NUMBER = '((?:M{0,3})(?:CM|CD|D?C{0,3})(?:XC|XL|L?X{0,3})(?:IX|IV|V?I{0,3}))(?<!^)';
     private const NUMBER = '(\d+|#)';
 
-    private const ALPHABETIC = '[a-z]';
+    private const ALPHABETIC = '([a-z])';
 
     private const LIST_MARKER = '(^%s([\.)])(?:\s+|$)|^[(]%s[)](?:\s+|$))';
 
@@ -116,8 +119,14 @@ final class EnumeratedListRule implements Rule
         }
 
         $items[] = $this->parseListItem($listConfig, $buffer, $blockContext);
+        $start = null;
+        $orderType = null;
+        if (isset($items[0])) {
+            $orderType = $items[0]->getOrderType();
+            $start = (string) $this->getStartValue($items[0]->getOrderNumber(), $orderType);
+        }
 
-        return new ListNode($items, true);
+        return new ListNode($items, true, $start, $orderType);
     }
 
     private function isListLine(string|null $line): bool
@@ -138,8 +147,8 @@ final class EnumeratedListRule implements Rule
         }
 
         return [
-            'marker' => trim($m[1]),
-            'marker_type' => $this->getMarkerType($m[1]),
+            'marker' => trim($m[0]),
+            'marker_type' => $this->getMarkerType($m[0]),
             'indenting' => $m[0] === $line ? 1 : mb_strlen($m[0]),
         ];
     }
@@ -155,7 +164,7 @@ final class EnumeratedListRule implements Rule
             return false;
         }
 
-        $normalizedMarker = $this->getMarkerType($m[1]);
+        $normalizedMarker = $this->getMarkerType($m[0]);
 
         if ($normalizedMarker === 'unknown') {
             return false;
@@ -168,11 +177,16 @@ final class EnumeratedListRule implements Rule
         return true;
     }
 
-    /** @param array{marker: string, indenting: int} $listConfig */
+    /** @param array{marker: string, indenting: int, marker_type: string} $listConfig */
     private function parseListItem(array $listConfig, Buffer $buffer, BlockContext $blockContext): ListItemNode
     {
         $marker = trim($listConfig['marker'], '.()');
-        $listItem = new ListItemNode($marker, false, []);
+        $orderNumber = null;
+        if ($marker !== '#') {
+            $orderNumber = $marker;
+        }
+
+        $listItem = new ListItemNode($marker, false, [], $orderNumber);
         $subContext = new BlockContext($blockContext->getDocumentParserContext(), $buffer->getLinesString(), false, $blockContext->getDocumentIterator()->key());
         while ($subContext->getDocumentIterator()->valid()) {
             $this->productions->apply($subContext, $listItem);
@@ -185,7 +199,7 @@ final class EnumeratedListRule implements Rule
 
         // the list item offset is determined by the offset of the first text
         if ($nodes[0] instanceof ParagraphNode) {
-            return new ListItemNode($marker, false, $nodes[0]->getChildren());
+            return new ListItemNode($marker, false, $nodes[0]->getChildren(), $orderNumber, $listConfig['marker_type']);
         }
 
         return $listItem;
@@ -211,6 +225,10 @@ final class EnumeratedListRule implements Rule
             return 'roman' . $this->markerSuffix($marker);
         }
 
+        if (preg_match('/' . sprintf(self::LIST_MARKER, self::ALPHABETIC, self::ALPHABETIC) . '/', $marker)) {
+            return 'alphabetic' . $this->markerSuffix($marker);
+        }
+
         return 'unknown';
     }
 
@@ -229,5 +247,59 @@ final class EnumeratedListRule implements Rule
         }
 
         return '';
+    }
+
+    private function getStartValue(string|null $firstItemNumber, string|null $orderType): int|null
+    {
+        if ($firstItemNumber === null) {
+            return null;
+        }
+
+        if ($orderType === 'auto_number' . $this->markerSuffix($firstItemNumber)) {
+            return null;
+        }
+
+        if (preg_match('/^\d+$/', $firstItemNumber)) {
+            return (int) $firstItemNumber;
+        }
+
+        if (preg_match('/^' . self::ROMAN_NUMBER . '$/i', $firstItemNumber, $m)) {
+            $roman = strtoupper($m[1]);
+            $map = [
+                'M' => 1000,
+                'CM' => 900,
+                'D' => 500,
+                'CD' => 400,
+                'C' => 100,
+                'XC' => 90,
+                'L' => 50,
+                'XL' => 40,
+                'X' => 10,
+                'IX' => 9,
+                'V' => 5,
+                'IV' => 4,
+                'I' => 1,
+            ];
+
+            $number = 0;
+            $i = 0;
+            while ($i < strlen($roman)) {
+                foreach ($map as $symbol => $value) {
+                    if (str_starts_with(mb_substr($roman, $i), $symbol)) {
+                        $number += $value;
+                        $i += strlen($symbol);
+                        break;
+                    }
+                }
+            }
+
+            return $number;
+        }
+
+        if (preg_match('/^[a-z]$/i', $firstItemNumber)) {
+            return ord(strtolower($firstItemNumber)) - ord('a') + 1;
+        }
+
+        return 1;
     }
 }

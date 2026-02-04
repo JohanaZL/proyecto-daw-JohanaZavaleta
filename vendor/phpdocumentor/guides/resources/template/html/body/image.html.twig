@@ -1,5 +1,6 @@
+{% if node.target %}<a href="{{ node.target.url }}">{% endif %}
 <img
-    src="{{ asset(node.value) }}"
+    src="{%- if node.value is external_target -%} {{ node.value }} {%- else -%} {{ asset(node.value) }} {%- endif -%}"
     {% if node.hasOption('width') %}width="{{ node.option('width') }}"{% endif%}
     {% if node.hasOption('height') %}height="{{ node.option('height') }}"{% endif%}
     {% if node.hasOption('align') %}align="{{ node.option('align') }}"{% endif%}
@@ -7,3 +8,4 @@
     {% if node.hasOption('title') %}title="{{ node.option('title') }}"{% endif%}
     {% if node.classesString %}class="{{ node.classesString }}"{% endif%}
 />
+{% if node.target %}</a>{% endif %}

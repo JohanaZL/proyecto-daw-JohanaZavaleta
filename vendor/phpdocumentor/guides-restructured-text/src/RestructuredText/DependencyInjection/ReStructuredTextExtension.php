@@ -2,63 +2,113 @@
 
 declare(strict_types=1);
 
+/**
+ * This file is part of phpDocumentor.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @link https://phpdoc.org
+ */
+
 namespace phpDocumentor\Guides\RestructuredText\DependencyInjection;
 
-use phpDocumentor\Guides\NodeRenderers\TemplateNodeRenderer;
 use phpDocumentor\Guides\RestructuredText\DependencyInjection\Compiler\TextRolePass;
+use phpDocumentor\Guides\RestructuredText\Nodes\ConfvalNode;
+use phpDocumentor\Guides\RestructuredText\Nodes\OptionNode;
 use phpDocumentor\Guides\RestructuredText\Nodes\VersionChangeNode;
-use phpDocumentor\Guides\TemplateRenderer;
+use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
+use Symfony\Component\Config\Definition\ConfigurationInterface;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
 use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
-use Symfony\Component\DependencyInjection\Reference;
 
+use function assert;
 use function dirname;
-use function strrchr;
-use function substr;
+use function phpDocumentor\Guides\DependencyInjection\template;
 
-class ReStructuredTextExtension extends Extension implements PrependExtensionInterface, CompilerPassInterface
+final class ReStructuredTextExtension extends Extension implements
+    PrependExtensionInterface,
+    CompilerPassInterface,
+    ConfigurationInterface
 {
-    private const HTML = [VersionChangeNode::class => 'body/version-change.html.twig'];
-
     /** @param mixed[] $configs */
     public function load(array $configs, ContainerBuilder $container): void
     {
+        $configuration = $this->getConfiguration($configs, $container);
+        $config = $this->processConfiguration($configuration, $configs);
         $loader = new PhpFileLoader(
             $container,
             new FileLocator(dirname(__DIR__, 3) . '/resources/config'),
         );
 
-        foreach (self::HTML as $node => $template) {
-            $definition = new Definition(
-                TemplateNodeRenderer::class,
-                [
-                    '$renderer' => new Reference(TemplateRenderer::class),
-                    '$template' => $template,
-                    '$nodeClass' => $node,
-                ],
-            );
-            $definition->addTag('phpdoc.guides.noderenderer.html');
-
-            $container->setDefinition('phpdoc.guides.rst.' . substr(strrchr($node, '\\') ?: '', 1), $definition);
+        $normalizedLanguageLabels = [];
+        foreach ($config['code_language_labels'] ?? [] as $item) {
+            $normalizedLanguageLabels[$item['language']] = $item['label'];
         }
 
+        $container->setParameter('phpdoc.rst.code_language_labels', $normalizedLanguageLabels);
         $loader->load('guides-restructured-text.php');
     }
 
     public function prepend(ContainerBuilder $container): void
     {
-        $container->prependExtensionConfig('guides', [
-            'base_template_paths' => [dirname(__DIR__, 3) . '/resources/template/html'],
-        ]);
+        $container->prependExtensionConfig(
+            'guides',
+            [
+                'base_template_paths' => [
+                    dirname(__DIR__, 3) . '/resources/template/html',
+                    dirname(__DIR__, 3) . '/resources/template/latex',
+                ],
+                'templates' => [
+                    template(ConfvalNode::class, 'body/directive/confval.html.twig'),
+                    template(VersionChangeNode::class, 'body/version-change.html.twig'),
+                    template(ConfvalNode::class, 'body/directive/confval.tex.twig', 'tex'),
+                    template(OptionNode::class, 'body/directive/option.html.twig'),
+
+                ],
+            ],
+        );
     }
 
     public function process(ContainerBuilder $container): void
     {
         (new TextRolePass())->process($container);
+    }
+
+    public function getConfigTreeBuilder(): TreeBuilder
+    {
+        $treeBuilder = new TreeBuilder('rst');
+        $rootNode = $treeBuilder->getRootNode();
+        assert($rootNode instanceof ArrayNodeDefinition);
+
+        $rootNode
+            ->fixXmlConfig('code_language_label', 'code_language_labels')
+            ->children()
+                ->arrayNode('code_language_labels')
+                    ->arrayPrototype()
+                        ->children()
+                            ->scalarNode('language')
+                                ->isRequired()
+                            ->end()
+                            ->scalarNode('label')
+                                ->isRequired()
+                            ->end()
+                        ->end()
+                    ->end()
+                ->end()
+            ->end();
+
+        return $treeBuilder;
+    }
+
+    /** @param mixed[] $config */
+    public function getConfiguration(array $config, ContainerBuilder $container): static
+    {
+        return $this;
     }
 }

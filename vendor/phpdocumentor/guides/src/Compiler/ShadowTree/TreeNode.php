@@ -2,6 +2,15 @@
 
 declare(strict_types=1);
 
+/**
+ * This file is part of phpDocumentor.
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ *
+ * @link https://phpdoc.org
+ */
+
 namespace phpDocumentor\Guides\Compiler\ShadowTree;
 
 use LogicException;
@@ -11,6 +20,7 @@ use phpDocumentor\Guides\Nodes\Node;
 
 use function array_unshift;
 use function array_values;
+use function count;
 
 /** @template-covariant TNode of Node */
 final class TreeNode
@@ -188,5 +198,14 @@ final class TreeNode
         }
 
         return null;
+    }
+
+    public function isLastChildOfParent(): bool
+    {
+        if ($this->parent === null) {
+            return false;
+        }
+
+        return $this->parent->findPosition($this->node) === count($this->parent->getChildren()) - 1;
     }
 }

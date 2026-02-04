@@ -15,9 +15,11 @@ namespace phpDocumentor\JsonPath;
 
 use ArrayAccess;
 use Generator;
+use phpDocumentor\JsonPath\AST\Expression;
 use phpDocumentor\JsonPath\AST\FieldName;
 use phpDocumentor\JsonPath\AST\PathNode;
 use phpDocumentor\JsonPath\AST\QueryNode;
+use phpDocumentor\JsonPath\AST\Wildcard;
 use Symfony\Component\PropertyAccess\PropertyAccess;
 use Symfony\Component\PropertyAccess\PropertyAccessor;
 use Symfony\Component\PropertyAccess\PropertyPath;
@@ -26,7 +28,10 @@ use function array_merge;
 use function current;
 use function is_array;
 use function is_iterable;
+use function is_object;
+use function is_string;
 use function iterator_to_array;
+use function str_starts_with;
 use function strrpos;
 use function substr;
 
@@ -45,12 +50,67 @@ final class Executor
         return $query->visit($this, $currentElement, $rootElement);
     }
 
-    public function evaluateEqualsComparison(mixed $root, mixed $currentObject, QueryNode $left, QueryNode $right): bool
-    {
+    public function evaluateEqualsComparison(
+        mixed $root,
+        mixed $currentObject,
+        QueryNode $left,
+        QueryNode $right,
+    ): bool {
         $leftValue = $this->toValue($this->evaluate($left, $currentObject, $root));
         $rightValue = $this->toValue($this->evaluate($right, $currentObject, $root));
 
+        if (is_string($rightValue)) {
+            return ((string) $leftValue) === $rightValue;
+        }
+
         return $leftValue === $rightValue;
+    }
+
+    public function evaluateNotEqualsComparison(
+        mixed $root,
+        mixed $currentObject,
+        QueryNode $left,
+        QueryNode $right,
+    ): bool {
+        return ! $this->evaluateEqualsComparison($root, $currentObject, $left, $right);
+    }
+
+    public function evaluateStartsWithComparison(
+        mixed $root,
+        mixed $currentObject,
+        QueryNode $left,
+        QueryNode $right,
+    ): bool {
+        $leftValue = $this->toValue($this->evaluate($left, $currentObject, $root));
+        $rightValue = $this->toValue($this->evaluate($right, $currentObject, $root));
+
+        return str_starts_with((string) $leftValue, (string) $rightValue);
+    }
+
+    public function evaluateContainsComparison(
+        mixed $root,
+        mixed $currentObject,
+        QueryNode $left,
+        QueryNode $right,
+    ): bool {
+        $leftValue = $this->toValue($this->evaluate($left, $currentObject, $root));
+        $rightValue = $this->toValue($this->evaluate($right, $currentObject, $root));
+
+        if (is_iterable($leftValue)) {
+            foreach ($leftValue as $value) {
+                if (is_string($rightValue) && ((string) $value) === $rightValue) {
+                    return true;
+                }
+
+                if ($value === $rightValue) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        return false;
     }
 
     /**
@@ -100,8 +160,28 @@ final class Executor
     }
 
     /** @return Generator<mixed> */
-    public function evaluateFieldAccess(mixed $currentElement, FieldName $fieldName): Generator
+    public function evaluateFieldAccess(mixed $currentElement, FieldName|Expression $fieldName): Generator
     {
+        if ($fieldName instanceof Wildcard && is_iterable($currentElement)) {
+            foreach ($currentElement as $element) {
+                foreach ($element as $value) {
+                    yield $value;
+                }
+            }
+
+            return;
+        }
+
+        if ($currentElement instanceof Generator) {
+            foreach ($currentElement as $element) {
+                foreach ($this->evaluateFieldAccess($element, $fieldName) as $result) {
+                    yield $result;
+                }
+            }
+
+            return;
+        }
+
         if (
             (is_array($currentElement) || $currentElement instanceof ArrayAccess) &&
             isset($currentElement[$fieldName->getName()])
@@ -125,6 +205,19 @@ final class Executor
 
             yield from $result;
         } else {
+            if (is_object($currentElement) === false) {
+                return;
+            }
+
+            if (
+                $this->propertyAccessor->isReadable(
+                    $currentElement,
+                    new PropertyPath($fieldName->getName()),
+                ) === false
+            ) {
+                return;
+            }
+
             yield $this->propertyAccessor->getValue($currentElement, new PropertyPath($fieldName->getName()));
         }
     }

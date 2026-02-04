@@ -23,7 +23,7 @@ use function is_string;
 use function sprintf;
 
 /** @implements NodeRenderer<Node> */
-class DefaultNodeRenderer implements NodeRenderer, NodeRendererFactoryAware
+final class DefaultNodeRenderer implements NodeRenderer, NodeRendererFactoryAware
 {
     private NodeRendererFactory|null $nodeRendererFactory = null;
 
@@ -74,7 +74,7 @@ class DefaultNodeRenderer implements NodeRenderer, NodeRendererFactoryAware
         return '';
     }
 
-    public function supports(Node $node): bool
+    public function supports(string $nodeFqcn): bool
     {
         return true;
     }

@@ -25,6 +25,8 @@ use phpDocumentor\Reflection\Php\StrategyContainer;
 use PhpParser\Comment\Doc;
 use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\Node\Stmt\Interface_ as InterfaceNode;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 use Prophecy\Prophecy\ObjectProphecy;
@@ -32,19 +34,13 @@ use stdClass;
 
 use function current;
 
-/**
- * @uses \phpDocumentor\Reflection\Php\Interface_
- * @uses \phpDocumentor\Reflection\Php\Constant
- * @uses \phpDocumentor\Reflection\Php\Method
- * @uses \phpDocumentor\Reflection\Php\Visibility
- * @uses \phpDocumentor\Reflection\Php\Factory\Interface_::matches
- * @uses \phpDocumentor\Reflection\Php\Factory\ClassConstantIterator
- *
- * @coversDefaultClass \phpDocumentor\Reflection\Php\Factory\Interface_
- * @covers \phpDocumentor\Reflection\Php\Factory\AbstractFactory
- * @covers ::<private>
- * @covers ::<protected>
- */
+#[CoversClass(Interface_::class)]
+#[CoversClass(AbstractFactory::class)]
+#[UsesClass('\phpDocumentor\Reflection\Php\Interface_')]
+#[UsesClass('\phpDocumentor\Reflection\Php\Constant')]
+#[UsesClass('\phpDocumentor\Reflection\Php\Method')]
+#[UsesClass('\phpDocumentor\Reflection\Php\Visibility')]
+#[UsesClass('\phpDocumentor\Reflection\Php\Factory\ClassConstantIterator')]
 class Interface_Test extends TestCase
 {
     use ProphecyTrait;
@@ -57,18 +53,12 @@ class Interface_Test extends TestCase
         $this->fixture = new Interface_($this->docBlockFactory->reveal());
     }
 
-    /**
-     * @covers ::matches
-     */
     public function testMatches(): void
     {
         $this->assertFalse($this->fixture->matches(self::createContext(null), new stdClass()));
         $this->assertTrue($this->fixture->matches(self::createContext(null), m::mock(InterfaceNode::class)));
     }
 
-    /**
-     * @covers ::create
-     */
     public function testSimpleCreate(): void
     {
         $interfaceMock = $this->buildClassMock();
@@ -81,9 +71,6 @@ class Interface_Test extends TestCase
         $this->assertEquals('\Space\MyInterface', (string) $interface->getFqsen());
     }
 
-    /**
-     * @covers ::create
-     */
     public function testCreateWithDocBlock(): void
     {
         $doc           = new Doc('Text');
@@ -99,9 +86,6 @@ class Interface_Test extends TestCase
         $this->assertSame($docBlock, $interface->getDocBlock());
     }
 
-    /**
-     * @covers ::create
-     */
     public function testIteratesStatements(): void
     {
         $method1           = new ClassMethod('MyClass::method1');
@@ -120,7 +104,7 @@ class Interface_Test extends TestCase
 
         $containerMock->findMatching(
             Argument::type(ContextStack::class),
-            $method1
+            $method1,
         )->willReturn($strategyMock->reveal());
 
         $class = $this->performCreate($classMock, $containerMock->reveal());
@@ -129,14 +113,11 @@ class Interface_Test extends TestCase
         $this->assertEquals('\Space\MyInterface', (string) $class->getFqsen());
         $this->assertEquals(
             ['\MyClass::method1' => $method1Descriptor],
-            $class->getMethods()
+            $class->getMethods(),
         );
     }
 
-    /**
-     * @return m\MockInterface|InterfaceNode
-     */
-    private function buildClassMock()
+    private function buildClassMock(): m\MockInterface|InterfaceNode
     {
         $interfaceMock          = m::mock(InterfaceNode::class);
         $interfaceMock->extends = [];
@@ -154,7 +135,7 @@ class Interface_Test extends TestCase
         $this->fixture->create(
             self::createContext(null)->push($file),
             $interfaceMock,
-            $containerMock
+            $containerMock,
         );
 
         return current($file->getInterfaces());
