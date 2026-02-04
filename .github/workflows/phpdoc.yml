@@ -1,0 +1,34 @@
+name: Generar Documentación PHP
+
+on:
+  push:
+    branches:
+      - main
+      - desarrollo
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v3
+
+      - name: Instalar PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: Instalar PHPDocumentor
+        run: |
+          composer global require phpdocumentor/phpdocumentor
+
+      - name: Generar documentación
+        run: |
+          ~/.composer/vendor/bin/phpdoc -d php -t docs --template=clean
+
+      - name: Subir documentación generada
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "Actualización automática de documentación PHPDocumentor"
+          branch: ${{ github.ref }}
