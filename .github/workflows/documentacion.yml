@@ -27,7 +27,7 @@ jobs:
         run: vendor/bin/doctum.php update doctum.php
 
       - name: Subir documentación como artefacto
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: documentacion-php
           path: build/api

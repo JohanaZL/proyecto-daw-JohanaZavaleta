@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<phpdoc>
+    <title>Documentación Proyecto DAW - Johana Zavaleta</title>
+
+    <parser>
+        <target>build/api</target>
+    </parser>
+
+    <transformer>
+        <target>build/api</target>
+    </transformer>
+
+    <files>
+        <directory>php</directory>
+        <ignore>vendor</ignore>
+        <ignore>css</ignore>
+        <ignore>js</ignore>
+    </files>
+
+    <transformations>
+        <transformation writer="twig" source="clean" artifact="index.html" />
+    </transformations>
+</phpdoc>

@@ -1,0 +1,62 @@
+{
+    "name": "ConexionBD",
+    "line": 11,
+    "short_desc": "Clase ConexionBD",
+    "long_desc": "Gestiona la conexi\u00f3n a la base de datos MySQL del proyecto DAW.\nUtiliza la extensi\u00f3n mysqli para establecer la conexi\u00f3n.",
+    "hint": null,
+    "tags": {
+        "package": [
+            [
+                "ProyectoDAW"
+            ]
+        ],
+        "subpackage": [
+            [
+                "Conexion"
+            ]
+        ]
+    },
+    "namespace": "",
+    "file": "php\/conexion.php",
+    "relative_file": null,
+    "hash": "3afd5da044ecde97938b20a64e753749b39efb30",
+    "parent": null,
+    "modifiers": 0,
+    "is_trait": false,
+    "is_interface": false,
+    "is_read_only": false,
+    "aliases": null,
+    "errors": [],
+    "interfaces": [],
+    "traits": [],
+    "properties": [],
+    "methods": {
+        "conectar": {
+            "name": "conectar",
+            "line": 55,
+            "short_desc": "Establece la conexi\u00f3n con la base de datos.",
+            "long_desc": "",
+            "hint": [
+                [
+                    "\\mysqli",
+                    false
+                ]
+            ],
+            "hint_desc": "Objeto de conexi\u00f3n MySQLi.",
+            "tags": [],
+            "see": [],
+            "modifiers": 1,
+            "is_by_ref": "",
+            "is_intersection_type": false,
+            "exceptions": [
+                [
+                    "\\Exception",
+                    "Si ocurre un error durante la conexi\u00f3n."
+                ]
+            ],
+            "errors": [],
+            "parameters": []
+        }
+    },
+    "constants": []
+}
