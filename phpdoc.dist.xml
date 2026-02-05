@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<phpdocumentor>
+    <configVersion>2</configVersion>
+
+    <!-- Título de la documentación -->
+    <title>Documentación Proyecto DAW - Johana Zavaleta</title>
+
+    <!-- Archivos y directorios que se van a documentar -->
+    <files>
+        <directory>src</directory>
+    </files>
+
+    <!-- Transformaciones: dónde se genera la doc -->
+    <transformations>
+        <transformation>
+            <target>docs</target>
+            <format>HTML</format>
+        </transformation>
+    </transformations>
+
+    <!-- Parser: visibilidad que se documenta -->
+    <parser>
+        <visibility>public,protected,private</visibility>
+        <encoding>UTF-8</encoding>
+    </parser>
+
+    <!-- Opciones de logging -->
+    <logging>
+        <level>warning</level>
+    </logging>
+</phpdocumentor>

@@ -1,0 +1,33 @@
+name: Generar Documentación PHP
+
+on:
+  push:
+    branches:
+      - main
+      - desarrollo
+
+jobs:
+  build-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v3
+
+      - name: Instalar PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, intl
+
+      - name: Instalar dependencias
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Generar documentación con Doctum
+        run: vendor/bin/doctum.php update doctum.php
+
+      - name: Subir documentación como artefacto
+        uses: actions/upload-artifact@v3
+        with:
+          name: documentacion-php
+          path: build/api
